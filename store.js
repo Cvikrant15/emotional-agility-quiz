@@ -1,4 +1,4 @@
-const STORE_KEY = 'quizlab_v2';
+const STORE_KEY = 'quizlab_v3';
 
 function getStore() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || { users: [] }; }
