@@ -371,6 +371,22 @@ input::placeholder { color: var(--muted); font-weight: 400; }
   color: var(--danger);
 }
 
+/* ── HOME BUTTON ── */
+.home-btn {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px 13px;
+  transition: all 0.15s;
+  font-family: inherit;
+  margin-right: 10px;
+}
+.home-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+
 /* ── ADMIN / RESULTS ── */
 .admin-gate {
   display: flex;

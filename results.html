@@ -10,38 +10,48 @@
 
 <div class="topbar">
   <span class="brand"><span class="brand-dot"></span> QuizLab</span>
-  <span style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;">Admin</span>
+  <span id="adminLabel" style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;"></span>
 </div>
 
-<!-- Gate -->
+<!-- ── Login gate ── -->
 <div class="page" id="gate">
-  <div class="tc fu" style="padding: 16px 0 4px;">
-    <div style="font-size: 2.8rem; margin-bottom: 14px;">🔒</div>
+  <div class="tc fu" style="padding:16px 0 4px;">
+    <div style="font-size:2.8rem;margin-bottom:14px;">🔒</div>
     <h1>Admin Access</h1>
-    <p class="sub" style="margin-top: 10px;">This page is for administrators only.</p>
+    <p class="sub" style="margin-top:10px;">This page is for administrators only.</p>
   </div>
+
   <div class="card fu1">
     <form id="gateForm" class="fields">
       <div class="field">
-        <label for="pw">Password</label>
-        <input type="password" id="pw" placeholder="Enter admin password" autocomplete="current-password">
+        <label for="un">Username</label>
+        <input type="text" id="un" placeholder="admin1 or admin2" autocomplete="username" spellcheck="false">
       </div>
-      <p id="gateErr" class="text-err hidden">Incorrect password. Try again.</p>
+      <div class="field">
+        <label for="pw">Password</label>
+        <input type="password" id="pw" placeholder="Enter password" autocomplete="current-password">
+      </div>
+      <p id="gateErr" class="text-err hidden" style="margin-top:2px;">Incorrect username or password.</p>
       <button type="submit" class="btn btn-primary btn-full mt-2">Unlock Results</button>
     </form>
   </div>
 </div>
 
-<!-- Dashboard (hidden until unlocked) -->
+<!-- ── Dashboard (hidden until unlocked) ── -->
 <div class="page wide hidden" id="dashboard"></div>
 
 <script src="data.js"></script>
 <script src="seed.js"></script>
 <script src="store.js"></script>
 <script>
-  const ADMIN_PASSWORD = 'quizlab2024';
+  const ADMINS = {
+    admin1: 'QuizAdmin1!',
+    admin2: 'QuizAdmin2!'
+  };
 
   const COLORS = ['#6c5ce7','#00cec9','#fd79a8','#e17055','#00b894','#0984e3','#a29bfe','#fdcb6e'];
+
+  let currentAdmin = null;
 
   function avatarColor(email) {
     let h = 0;
@@ -57,27 +67,34 @@
     return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
+  // ── Gate form ──
   document.getElementById('gateForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    const val = document.getElementById('pw').value;
-    if (val === ADMIN_PASSWORD) {
+    const un  = document.getElementById('un').value.trim().toLowerCase();
+    const pw  = document.getElementById('pw').value;
+    const err = document.getElementById('gateErr');
+
+    if (ADMINS[un] && ADMINS[un] === pw) {
+      currentAdmin = un;
       document.getElementById('gate').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
+      document.getElementById('adminLabel').textContent = `Logged in as ${un}`;
       renderDashboard();
     } else {
-      document.getElementById('gateErr').classList.remove('hidden');
+      err.classList.remove('hidden');
       document.getElementById('pw').value = '';
       document.getElementById('pw').focus();
     }
   });
 
+  // ── Dashboard ──
   function renderDashboard() {
     const store = getStore();
     const users = store.users || [];
-    const dash = document.getElementById('dashboard');
+    const dash  = document.getElementById('dashboard');
 
-    const t1Done = users.filter(u => u.test1).length;
-    const t2Done = users.filter(u => u.test2).length;
+    const t1Done   = users.filter(u => u.test1).length;
+    const t2Done   = users.filter(u => u.test2).length;
     const avgScore = t1Done
       ? Math.round(users.filter(u => u.test1).reduce((s, u) => s + (u.test1.score / u.test1.total) * 100, 0) / t1Done)
       : 0;
@@ -86,11 +103,14 @@
       <div class="fu w100" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 0 8px;">
         <div>
           <h1 style="font-size:1.6rem;">Results Dashboard</h1>
-          <p class="sub" style="font-size:0.85rem;margin-top:3px;">All participants recorded in this browser</p>
+          <p class="sub" style="font-size:0.85rem;margin-top:3px;">
+            All participants · viewing as <strong>${currentAdmin}</strong>
+          </p>
         </div>
-        <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:0.85rem;padding:10px 18px;">
-          ↓ Export CSV
-        </button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:0.85rem;padding:10px 18px;">↓ Export CSV</button>
+          <button class="btn btn-ghost" onclick="logout()" style="font-size:0.85rem;padding:10px 18px;">Log out</button>
+        </div>
       </div>
 
       <div class="stat-row fu1">
@@ -116,7 +136,7 @@
         <div class="card fu2 tc">
           <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
           <h3>No participants yet</h3>
-          <p class="sub" style="margin-top:6px;font-size:0.88rem;">Participants will appear here once they complete the login.</p>
+          <p class="sub" style="margin-top:6px;font-size:0.88rem;">Participants appear here once they log in.</p>
         </div>
       ` : `
         <div class="card fu2" style="width:100%;">
@@ -135,15 +155,15 @@
               </thead>
               <tbody>
                 ${users.map(u => {
-                  const t1 = u.test1;
-                  const t2 = u.test2;
-                  const sp = t1 ? Math.round((t1.score / t1.total) * 100) : null;
-                  const color = avatarColor(u.email);
+                  const t1  = u.test1;
+                  const t2  = u.test2;
+                  const sp  = t1 ? Math.round((t1.score / t1.total) * 100) : null;
+                  const col = avatarColor(u.email);
                   return `
                     <tr>
                       <td>
                         <div style="display:flex;align-items:center;">
-                          <span class="avatar" style="background:${color};">${initials(u.name)}</span>
+                          <span class="avatar" style="background:${col};">${initials(u.name)}</span>
                           <span style="font-weight:600;">${u.name}</span>
                         </div>
                       </td>
@@ -175,9 +195,9 @@
             <div style="display:flex;flex-direction:column;gap:16px;">
               ${THIS_OR_THAT.map(q => {
                 const all = users.flatMap(u => u.test2 ? u.test2.answers : []);
-                const qa = all.filter(a => a.questionId === q.id);
-                const av = qa.filter(a => a.chosen === 'a').length;
-                const bv = qa.filter(a => a.chosen === 'b').length;
+                const qa  = all.filter(a => a.questionId === q.id);
+                const av  = qa.filter(a => a.chosen === 'a').length;
+                const bv  = qa.filter(a => a.chosen === 'b').length;
                 const tot = av + bv;
                 if (!tot) return '';
                 const ap = Math.round((av / tot) * 100);
@@ -185,8 +205,12 @@
                 return `
                   <div>
                     <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:0.88rem;">
-                      <span style="font-weight:${ap >= bp ? 700 : 400};color:${ap >= bp ? 'var(--accent)' : 'var(--muted)'};">${q.a} <span style="font-size:0.78rem;">(${ap}%)</span></span>
-                      <span style="font-weight:${bp > ap ? 700 : 400};color:${bp > ap ? 'var(--accent2)' : 'var(--muted)'};">${q.b} <span style="font-size:0.78rem;">(${bp}%)</span></span>
+                      <span style="font-weight:${ap >= bp ? 700 : 400};color:${ap >= bp ? 'var(--accent)' : 'var(--muted)'};">
+                        ${q.a} <span style="font-size:0.78rem;">(${ap}%)</span>
+                      </span>
+                      <span style="font-weight:${bp > ap ? 700 : 400};color:${bp > ap ? 'var(--accent2)' : 'var(--muted)'};">
+                        ${q.b} <span style="font-size:0.78rem;">(${bp}%)</span>
+                      </span>
                     </div>
                     <div style="height:9px;border-radius:99px;overflow:hidden;display:flex;">
                       <div style="width:${ap}%;background:var(--accent);transition:width .6s ease;"></div>
@@ -199,13 +223,23 @@
           </div>
         ` : ''}
 
-        <div class="fu3" style="width:100%;display:flex;gap:12px;">
-          <button class="btn btn-ghost" style="flex:1;color:var(--danger);border-color:var(--danger);" onclick="clearAll()">
-            Clear all data
+        <div class="fu3" style="width:100%;">
+          <button class="btn btn-ghost btn-full" style="color:var(--danger);border-color:var(--danger);" onclick="clearAll()">
+            Clear all participant data
           </button>
         </div>
       `}
     `;
+  }
+
+  function logout() {
+    currentAdmin = null;
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('gate').classList.remove('hidden');
+    document.getElementById('adminLabel').textContent = '';
+    document.getElementById('un').value = '';
+    document.getElementById('pw').value = '';
+    document.getElementById('gateErr').classList.add('hidden');
   }
 
   function clearAll() {
@@ -216,22 +250,21 @@
 
   function exportCSV() {
     const users = getStore().users || [];
-    const rows = [['Name', 'Email', 'MCQ Score', 'MCQ %', 'This or That Done', 'Joined']];
+    const rows  = [['Name', 'Email', 'MCQ Score', 'MCQ %', 'This or That Done', 'Joined']];
     users.forEach(u => {
       const t1 = u.test1;
-      const t2 = u.test2;
       rows.push([
         u.name,
         u.email,
         t1 ? `${t1.score}/${t1.total}` : '',
         t1 ? Math.round((t1.score / t1.total) * 100) + '%' : '',
-        t2 ? 'Yes' : 'No',
+        u.test2 ? 'Yes' : 'No',
         fmtDate(u.joinedAt)
       ]);
     });
     const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    const a   = document.createElement('a');
+    a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
     a.download = 'quizlab-results.csv';
     a.click();
   }

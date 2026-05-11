@@ -10,11 +10,14 @@
 
 <div class="topbar">
   <span class="brand"><span class="brand-dot"></span> QuizLab</span>
-  <div class="steps">
-    <div class="step done"></div>
-    <div class="step done"></div>
-    <div class="step active"></div>
-    <div class="step"></div>
+  <div style="display:flex;align-items:center;gap:0;">
+    <button class="home-btn" id="homeBtn" onclick="goHome()">← Home</button>
+    <div class="steps">
+      <div class="step done"></div>
+      <div class="step done"></div>
+      <div class="step active"></div>
+      <div class="step"></div>
+    </div>
   </div>
 </div>
 
@@ -24,12 +27,41 @@
 <script src="seed.js"></script>
 <script src="store.js"></script>
 <script>
-  if (!requireLogin()) throw new Error('not logged in');
+  if (!requireLogin()) throw new Error('redirect');
+
+  const user = getCurrentUser();
+
+  // Must complete test 1 first
+  if (user && !user.test1) {
+    window.location.replace('test1.html');
+    throw new Error('redirect');
+  }
+
+  // Already finished test 2 — skip to thanks
+  if (user && user.test2) {
+    window.location.replace('thanks.html');
+    throw new Error('redirect');
+  }
+
+  // Lock browser back button
+  history.pushState(null, '', location.href);
+  window.addEventListener('popstate', function () {
+    history.pushState(null, '', location.href);
+  });
+
+  let testComplete = false;
+
+  function goHome() {
+    if (testComplete) { window.location.href = 'index.html'; return; }
+    if (confirm('Leave the test? Your progress will be lost and you\'ll need to start over.')) {
+      window.location.href = 'index.html';
+    }
+  }
 
   const app = document.getElementById('app');
   const questions = shuffle(THIS_OR_THAT);
   let idx = 0;
-  let answers = [];
+  const answers = [];
 
   function render() {
     if (idx >= questions.length) { showSummary(); return; }
@@ -81,6 +113,7 @@
   }
 
   function showSummary() {
+    testComplete = true;
     saveTest2(answers);
     const aCount = answers.filter(a => a.chosen === 'a').length;
     const bCount = answers.length - aCount;
