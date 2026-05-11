@@ -67,11 +67,17 @@ body {
 }
 .admin-btn:hover { color: var(--text); border-color: var(--muted); background: var(--surface); }
 
-.brand-dot {
-  width: 8px; height: 8px;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
   background: var(--accent);
-  border-radius: 50%;
-  display: inline-block;
+  color: #fff;
+  border-radius: 7px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
 }
 
 /* ── STEP INDICATOR ── */

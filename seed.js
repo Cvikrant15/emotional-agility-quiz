@@ -68,58 +68,45 @@
     name: 'Sofia Rossi',
     email: 'sofia.rossi@example.com',
     joinedAt: '2026-05-08T08:42:00.000Z',
-    test1: buildTest1(['no','yes','yes','yes','yes','yes','no','yes','yes','yes']),
+    test1: null,
     test2: buildTest2(['a','a','b','b','a','a','b','b','b','a'])
   };
-  sofia.test1.completedAt = '2026-05-08T08:51:00.000Z';
   sofia.test2.completedAt = '2026-05-08T08:57:00.000Z';
 
-  // James Chen — resilient, growth-minded, sometimes holds grudges
-  // Q1:no  Q2:yes  Q3:yes  Q4:yes  Q5:yes  Q6:yes  Q7:yes  Q8:yes  Q9:yes  Q10:yes
   const james = {
     name: 'James Chen',
     email: 'james.chen@example.com',
     joinedAt: '2026-05-08T10:05:00.000Z',
-    test1: buildTest1(['no','yes','yes','yes','yes','yes','yes','yes','yes','yes']),
+    test1: null,
     test2: buildTest2(['a','b','a','a','a','a','a','a','a','b'])
   };
-  james.test1.completedAt = '2026-05-09T10:18:00.000Z';
   james.test2.completedAt = '2026-05-09T10:24:00.000Z';
 
-  // Priya Nair — empathetic but sometimes self-critical, struggles with focus
-  // Q1:yes  Q2:yes  Q3:yes  Q4:yes  Q5:yes  Q6:yes  Q7:yes  Q8:no  Q9:no  Q10:yes
   const priya = {
     name: 'Priya Nair',
     email: 'priya.nair@example.com',
     joinedAt: '2026-05-09T14:30:00.000Z',
-    test1: buildTest1(['yes','yes','yes','yes','yes','yes','yes','no','no','yes']),
+    test1: null,
     test2: buildTest2(['a','a','a','b','b','a','b','a','a','b'])
   };
-  priya.test1.completedAt = '2026-05-09T14:42:00.000Z';
   priya.test2.completedAt = '2026-05-09T14:48:00.000Z';
 
-  // Tom Mueller — practical, driven, less in touch with emotional side
-  // Q1:yes  Q2:no  Q3:yes  Q4:yes  Q5:no  Q6:yes  Q7:yes  Q8:yes  Q9:no  Q10:no
   const tom = {
     name: 'Tom Mueller',
     email: 'tom.mueller@example.com',
     joinedAt: '2026-05-10T09:00:00.000Z',
-    test1: buildTest1(['yes','no','yes','yes','no','yes','yes','yes','no','no']),
+    test1: null,
     test2: buildTest2(['b','b','a','a','a','a','a','a','a','b'])
   };
-  tom.test1.completedAt = '2026-05-10T09:14:00.000Z';
   tom.test2.completedAt = '2026-05-10T09:20:00.000Z';
 
-  // Emma Wilson — self-aware, mindful, handles emotions well
-  // Q1:no  Q2:yes  Q3:yes  Q4:yes  Q5:yes  Q6:yes  Q7:no  Q8:yes  Q9:yes  Q10:yes
   const emma = {
     name: 'Emma Wilson',
     email: 'emma.wilson@example.com',
     joinedAt: '2026-05-10T16:15:00.000Z',
-    test1: buildTest1(['no','yes','yes','yes','yes','yes','no','yes','yes','yes']),
+    test1: null,
     test2: buildTest2(['b','a','b','b','b','b','b','b','b','a'])
   };
-  emma.test1.completedAt = '2026-05-10T16:26:00.000Z';
   emma.test2.completedAt = '2026-05-10T16:32:00.000Z';
 
   localStorage.setItem(KEY, JSON.stringify({ users: [sofia, james, priya, tom, emma] }));
