@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizLab — This or That</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand"><span class="brand-dot"></span> QuizLab</span>
+  <div class="steps">
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step active"></div>
+    <div class="step"></div>
+  </div>
+</div>
+
+<div class="page" id="app"></div>
+
+<script src="data.js"></script>
+<script src="seed.js"></script>
+<script src="store.js"></script>
+<script>
+  if (!requireLogin()) throw new Error('not logged in');
+
+  const app = document.getElementById('app');
+  const questions = shuffle(THIS_OR_THAT);
+  let idx = 0;
+  let answers = [];
+
+  function render() {
+    if (idx >= questions.length) { showSummary(); return; }
+
+    const q = questions[idx];
+    const pct = Math.round((idx / questions.length) * 100);
+
+    app.innerHTML = `
+      <div class="progress-wrap fu w100">
+        <div class="progress-meta">
+          <span>Round ${idx + 1} <span class="muted">of ${questions.length}</span></span>
+          <span class="muted">${pct}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+
+      <div class="card fu1">
+        <p style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:20px;text-align:center;">
+          Test 2 &nbsp;·&nbsp; This or That
+        </p>
+
+        <div class="tot-grid" id="grid">
+          <button class="tot-btn side-a" onclick="pick('a')">${q.a}</button>
+          <button class="tot-btn side-b" onclick="pick('b')">${q.b}</button>
+          <div class="vs-badge">VS</div>
+        </div>
+
+        <p class="sub" style="text-align:center;font-size:0.84rem;margin-top:18px;">
+          No right or wrong — just go with your gut 👇
+        </p>
+      </div>
+    `;
+  }
+
+  function pick(side) {
+    const q = questions[idx];
+    answers.push({ questionId: q.id, a: q.a, b: q.b, chosen: side });
+
+    const btnA = document.querySelector('.side-a');
+    const btnB = document.querySelector('.side-b');
+    btnA.disabled = true;
+    btnB.disabled = true;
+
+    const chosen = side === 'a' ? btnA : btnB;
+    chosen.classList.add('chosen');
+    chosen.style.transform = 'translateY(-4px) scale(1.03)';
+
+    setTimeout(() => { idx++; render(); }, 460);
+  }
+
+  function showSummary() {
+    saveTest2(answers);
+    const aCount = answers.filter(a => a.chosen === 'a').length;
+    const bCount = answers.length - aCount;
+
+    app.innerHTML = `
+      <div class="tc fu" style="padding:12px 0 4px;">
+        <div style="font-size:3rem;margin-bottom:12px;">✨</div>
+        <h1>All wrapped up!</h1>
+        <p class="sub" style="margin-top:8px;">Here's a quick look at how you voted.</p>
+      </div>
+
+      <div class="fu1 w100" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card tc" style="padding:24px 16px;">
+          <div style="font-size:2.2rem;font-weight:800;color:var(--accent);letter-spacing:-0.04em;">${aCount}</div>
+          <div class="sub" style="font-size:0.82rem;margin-top:4px;">first option picks</div>
+        </div>
+        <div class="card tc" style="padding:24px 16px;">
+          <div style="font-size:2.2rem;font-weight:800;color:var(--accent2);letter-spacing:-0.04em;">${bCount}</div>
+          <div class="sub" style="font-size:0.82rem;margin-top:4px;">second option picks</div>
+        </div>
+      </div>
+
+      <div class="card fu2">
+        <h3 style="margin-bottom:18px;">Your choices</h3>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${answers.map(a => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-radius:10px;">
+              <span style="flex:1;text-align:right;font-size:0.9rem;
+                font-weight:${a.chosen === 'a' ? '700' : '400'};
+                color:${a.chosen === 'a' ? 'var(--accent)' : 'var(--muted)'};">${a.a}</span>
+              <span style="font-size:0.68rem;font-weight:900;color:var(--muted);flex-shrink:0;">VS</span>
+              <span style="flex:1;font-size:0.9rem;
+                font-weight:${a.chosen === 'b' ? '700' : '400'};
+                color:${a.chosen === 'b' ? 'var(--accent2)' : 'var(--muted)'};">${a.b}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="fu3 w100">
+        <a href="thanks.html" class="btn btn-primary btn-full">See my results &nbsp;→</a>
+      </div>
+    `;
+  }
+
+  render();
+</script>
+</body>
+</html>
