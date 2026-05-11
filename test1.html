@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizLab — MCQ Test</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand"><span class="brand-dot"></span> QuizLab</span>
+  <div class="steps">
+    <div class="step done"></div>
+    <div class="step active"></div>
+    <div class="step"></div>
+    <div class="step"></div>
+  </div>
+</div>
+
+<div class="page" id="app"></div>
+
+<script src="data.js"></script>
+<script src="seed.js"></script>
+<script src="store.js"></script>
+<script>
+  if (!requireLogin()) throw new Error('not logged in');
+
+  const user = getCurrentUser();
+  const app = document.getElementById('app');
+  const KEYS = ['A', 'B', 'C', 'D'];
+
+  const questions = shuffle(MCQ_QUESTIONS);
+  let idx = 0;
+  let picked = null;
+  let answers = [];
+  let score = 0;
+  let answered = false;
+
+  function render() {
+    if (idx >= questions.length) { showSummary(); return; }
+
+    const q = questions[idx];
+    const pct = Math.round((idx / questions.length) * 100);
+
+    app.innerHTML = `
+      <div class="progress-wrap fu w100">
+        <div class="progress-meta">
+          <span>Question ${idx + 1} <span class="muted">of ${questions.length}</span></span>
+          <span class="muted">${pct}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="pf" style="width:${pct}%"></div></div>
+      </div>
+
+      <div class="card fu1">
+        <p style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;">
+          Test 1 &nbsp;·&nbsp; Multiple Choice
+        </p>
+        <h2 style="margin-bottom:26px;line-height:1.5;">${q.question}</h2>
+
+        <div class="options" id="opts">
+          ${q.options.map((o, i) => `
+            <button class="opt" data-i="${i}" onclick="pick(${i})">
+              <span class="opt-key">${KEYS[i]}</span>
+              <span>${o}</span>
+            </button>
+          `).join('')}
+        </div>
+
+        <div id="fb" class="inline-feedback"></div>
+
+        <div style="margin-top:22px;display:flex;justify-content:flex-end;">
+          <button class="btn btn-primary" id="nxt" onclick="next()" disabled>
+            ${idx === questions.length - 1 ? 'Finish Test' : 'Next question'} &nbsp;→
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function pick(i) {
+    if (answered) return;
+    answered = true;
+
+    const q = questions[idx];
+    const correct = i === q.answer;
+    if (correct) score++;
+
+    const btns = document.querySelectorAll('.opt');
+    btns.forEach(b => b.disabled = true);
+    btns[i].classList.add(correct ? 'correct' : 'wrong');
+    if (!correct) btns[q.answer].classList.add('correct');
+
+    answers.push({ questionId: q.id, question: q.question, chosen: i, correct: q.answer, isCorrect: correct });
+
+    const fb = document.getElementById('fb');
+    fb.className = `inline-feedback ${correct ? 'correct' : 'wrong'}`;
+    fb.innerHTML = correct
+      ? `<span>✓</span><span>Correct! Well done.</span>`
+      : `<span>✗</span><span>The correct answer was <strong>${q.options[q.answer]}</strong></span>`;
+    requestAnimationFrame(() => fb.classList.add('show'));
+
+    document.getElementById('nxt').disabled = false;
+  }
+
+  function next() {
+    answered = false;
+    idx++;
+    render();
+  }
+
+  function showSummary() {
+    saveTest1(answers, score, questions.length);
+    const pct = Math.round((score / questions.length) * 100);
+    const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '👍' : '💪';
+    const msg = pct >= 80 ? 'Excellent work!' : pct >= 60 ? 'Good job!' : pct >= 40 ? 'Not bad!' : 'Keep practising!';
+
+    app.innerHTML = `
+      <div class="tc fu" style="padding:12px 0 4px;">
+        <div style="font-size:3rem;margin-bottom:12px;">${emoji}</div>
+        <h1>${score} <span style="color:var(--muted);font-size:1.4rem;">/ ${questions.length}</span></h1>
+        <p class="sub" style="margin-top:8px;">${pct}% correct &nbsp;·&nbsp; ${msg}</p>
+      </div>
+
+      <div class="card fu1">
+        <h3 style="margin-bottom:18px;">Review your answers</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          ${answers.map((a, n) => {
+            const q = questions.find(q => q.id === a.questionId);
+            return `
+              <div style="padding:14px 16px;background:var(--bg);border-radius:10px;border-left:3px solid ${a.isCorrect ? 'var(--success)' : 'var(--danger)'};">
+                <p style="font-size:0.78rem;color:var(--muted);font-weight:700;margin-bottom:5px;">Q${n + 1}</p>
+                <p style="font-weight:600;margin-bottom:6px;line-height:1.4;">${a.question}</p>
+                <p style="font-size:0.88rem;color:${a.isCorrect ? 'var(--success)' : 'var(--danger)'};">
+                  ${a.isCorrect ? '✓' : '✗'} Your answer: ${q.options[a.chosen]}
+                  ${!a.isCorrect ? `<span style="color:var(--muted)"> &nbsp;·&nbsp; Correct: ${q.options[a.correct]}</span>` : ''}
+                </p>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="fu2 w100">
+        <a href="test2.html" class="btn btn-primary btn-full">Continue to Test 2 &nbsp;→</a>
+      </div>
+    `;
+  }
+
+  render();
+</script>
+</body>
+</html>

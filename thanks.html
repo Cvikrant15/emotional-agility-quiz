@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuizLab — Thank You!</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="brand"><span class="brand-dot"></span> QuizLab</span>
+  <div class="steps">
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step active"></div>
+  </div>
+</div>
+
+<div class="page" id="app"></div>
+
+<script src="data.js"></script>
+<script src="seed.js"></script>
+<script src="store.js"></script>
+<script>
+  if (!requireLogin()) throw new Error('not logged in');
+
+  const user = getCurrentUser();
+  const app = document.getElementById('app');
+
+  const t1 = user && user.test1;
+  const t2 = user && user.test2;
+  const pct = t1 ? Math.round((t1.score / t1.total) * 100) : null;
+  const firstName = user ? user.name.split(' ')[0] : 'there';
+
+  app.innerHTML = `
+    <div class="tc fu" style="padding: 16px 0 4px;">
+      <div class="confetti-wrap pop">🎉🎊✨</div>
+      <h1 style="margin-top: 10px;">Thank you, ${firstName}!</h1>
+      <p class="sub" style="margin-top: 10px; max-width: 340px; margin-inline: auto;">
+        You've completed both tests. Your responses have been recorded — we'll be in touch!
+      </p>
+    </div>
+
+    ${t1 ? `
+      <div class="card fu1">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
+          <h3>Your MCQ Score</h3>
+          <span style="font-size: 1.5rem; font-weight: 800; letter-spacing: -0.04em; color: var(--accent);">
+            ${t1.score} / ${t1.total}
+          </span>
+        </div>
+        <div class="progress-bar" style="height: 10px;">
+          <div class="progress-fill" style="width: ${pct}%;"></div>
+        </div>
+        <p class="sub" style="font-size: 0.85rem; margin-top: 10px; text-align: right;">
+          ${pct}% &nbsp;·&nbsp; ${pct >= 80 ? '🏆 Excellent' : pct >= 60 ? '🎉 Good job' : pct >= 40 ? '👍 Not bad' : '💪 Keep going'}
+        </p>
+      </div>
+    ` : ''}
+
+    ${t2 ? (() => {
+      const aCount = t2.answers.filter(a => a.chosen === 'a').length;
+      const bCount = t2.answers.length - aCount;
+      return `
+        <div class="card fu2">
+          <h3 style="margin-bottom: 14px;">Your This or That breakdown</h3>
+          <div style="display: flex; gap: 0; border-radius: 10px; overflow: hidden; height: 10px;">
+            <div style="width: ${Math.round((aCount / t2.answers.length) * 100)}%; background: var(--accent); transition: width 0.6s ease;"></div>
+            <div style="flex: 1; background: var(--accent2);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.85rem;">
+            <span style="color: var(--accent); font-weight: 700;">${aCount} first picks</span>
+            <span style="color: var(--accent2); font-weight: 700;">${bCount} second picks</span>
+          </div>
+        </div>
+      `;
+    })() : ''}
+
+    <div class="card fu3 tc">
+      <div style="font-size: 2rem; margin-bottom: 10px;">👏</div>
+      <h3>All done!</h3>
+      <p class="sub" style="font-size: 0.9rem; margin-top: 8px;">
+        Feel free to close this tab. Your responses have been saved.
+      </p>
+    </div>
+  `;
+</script>
+</body>
+</html>
