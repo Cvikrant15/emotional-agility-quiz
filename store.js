@@ -37,13 +37,13 @@ function saveTest1(answers) {
   }
 }
 
-function saveTest2(answers) {
+function saveTest2(answers, skipped = false) {
   const email = sessionStorage.getItem('ql_email');
   if (!email) return;
   const store = getStore();
   const user = store.users.find(u => u.email === email);
   if (user) {
-    user.test2 = { answers, completedAt: new Date().toISOString() };
+    user.test2 = { answers, skipped, completedAt: new Date().toISOString() };
     saveStore(store);
   }
 }

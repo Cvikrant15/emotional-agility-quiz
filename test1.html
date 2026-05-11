@@ -9,7 +9,7 @@
 <body>
 
 <div class="topbar">
-  <span class="brand"><span class="brand-dot"></span> QuizLab</span>
+  <a class="brand" href="index.html"><span class="brand-dot"></span> QuizLab</a>
   <div style="display:flex;align-items:center;gap:0;">
     <button class="home-btn" id="homeBtn" onclick="goHome()">← Home</button>
     <div class="steps">
@@ -114,45 +114,16 @@
     testComplete = true;
     saveTest1(answers);
 
-    const yesCount = answers.filter(a => a.chosen === 'yes').length;
-    const noCount  = answers.length - yesCount;
-
     app.innerHTML = `
-      <div class="tc fu" style="padding:12px 0 4px;">
-        <div style="font-size:3rem;margin-bottom:12px;">✅</div>
-        <h1>Test 1 done!</h1>
-        <p class="sub" style="margin-top:8px;">Thanks for being honest. Here's a quick look at your responses.</p>
+      <div class="tc fu" style="padding:24px 0 4px;">
+        <div style="font-size:3rem;margin-bottom:14px;">✅</div>
+        <h1>Section 1 complete!</h1>
+        <p class="sub" style="margin-top:10px;max-width:320px;margin-inline:auto;">
+          Great work — let's move on to the next part.
+        </p>
       </div>
-
-      <div class="fu1 w100" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div class="card tc" style="padding:24px 16px;">
-          <div style="font-size:2.2rem;font-weight:800;color:var(--success);letter-spacing:-0.04em;">${yesCount}</div>
-          <div class="sub" style="font-size:0.82rem;margin-top:4px;">Yes</div>
-        </div>
-        <div class="card tc" style="padding:24px 16px;">
-          <div style="font-size:2.2rem;font-weight:800;color:var(--danger);letter-spacing:-0.04em;">${noCount}</div>
-          <div class="sub" style="font-size:0.82rem;margin-top:4px;">No</div>
-        </div>
-      </div>
-
-      <div class="card fu2">
-        <h3 style="margin-bottom:18px;">Your responses</h3>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          ${answers.map((a, n) => `
-            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bg);border-radius:10px;
-              border-left:3px solid ${a.chosen === 'yes' ? 'var(--success)' : 'var(--danger)'};">
-              <span style="font-size:0.75rem;font-weight:700;color:var(--muted);min-width:22px;padding-top:2px;">${n + 1}</span>
-              <span style="flex:1;font-size:0.9rem;line-height:1.5;">${a.question}</span>
-              <span style="font-size:0.82rem;font-weight:800;color:${a.chosen === 'yes' ? 'var(--success)' : 'var(--danger)'};flex-shrink:0;padding-top:2px;">
-                ${a.chosen === 'yes' ? 'Yes' : 'No'}
-              </span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-
-      <div class="fu3 w100">
-        <a href="test2.html" class="btn btn-primary btn-full">Continue to Test 2 &nbsp;→</a>
+      <div class="fu1 w100">
+        <a href="test2.html" class="btn btn-primary btn-full">Continue &nbsp;→</a>
       </div>
     `;
   }

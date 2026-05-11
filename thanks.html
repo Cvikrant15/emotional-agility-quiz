@@ -9,8 +9,9 @@
 <body>
 
 <div class="topbar">
-  <span class="brand"><span class="brand-dot"></span> QuizLab</span>
-  <div style="display:flex;align-items:center;gap:0;">
+  <a class="brand" href="index.html"><span class="brand-dot"></span> QuizLab</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="results.html" class="admin-btn">🔒 Admin</a>
     <button class="home-btn" onclick="window.location.href='index.html'">← Home</button>
     <div class="steps">
       <div class="step done"></div>
@@ -29,11 +30,8 @@
 <script>
   if (!requireLogin()) throw new Error('redirect');
 
-  const user = getCurrentUser();
-  const app  = document.getElementById('app');
-
-  const t1        = user && user.test1;
-  const t2        = user && user.test2;
+  const user      = getCurrentUser();
+  const app       = document.getElementById('app');
   const firstName = user ? user.name.split(' ')[0] : 'there';
 
   app.innerHTML = `
@@ -41,47 +39,11 @@
       <div class="confetti-wrap pop">🎉🎊✨</div>
       <h1 style="margin-top:10px;">Thank you, ${firstName}!</h1>
       <p class="sub" style="margin-top:10px;max-width:340px;margin-inline:auto;">
-        You've completed both tests. Your responses have been recorded — we'll be in touch!
+        You've completed both sections. Your responses have been recorded — we'll be in touch!
       </p>
     </div>
 
-    ${t1 ? (() => {
-      const yesCount = t1.answers.filter(a => a.chosen === 'yes').length;
-      const noCount  = t1.answers.length - yesCount;
-      return `
-        <div class="card fu1">
-          <h3 style="margin-bottom:14px;">Test 1 — Your responses</h3>
-          <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;height:10px;">
-            <div style="width:${Math.round((yesCount / t1.answers.length) * 100)}%;background:var(--success);transition:width 0.6s ease;"></div>
-            <div style="flex:1;background:var(--danger);opacity:0.5;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:0.85rem;">
-            <span style="color:var(--success);font-weight:700;">${yesCount} Yes</span>
-            <span style="color:var(--danger);font-weight:700;">${noCount} No</span>
-          </div>
-        </div>
-      `;
-    })() : ''}
-
-    ${t2 ? (() => {
-      const aCount = t2.answers.filter(a => a.chosen === 'a').length;
-      const bCount = t2.answers.length - aCount;
-      return `
-        <div class="card fu2">
-          <h3 style="margin-bottom:14px;">Your This or That breakdown</h3>
-          <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;height:10px;">
-            <div style="width:${Math.round((aCount / t2.answers.length) * 100)}%;background:var(--accent);transition:width 0.6s ease;"></div>
-            <div style="flex:1;background:var(--accent2);"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:0.85rem;">
-            <span style="color:var(--accent);font-weight:700;">${aCount} first picks</span>
-            <span style="color:var(--accent2);font-weight:700;">${bCount} second picks</span>
-          </div>
-        </div>
-      `;
-    })() : ''}
-
-    <div class="card fu3 tc">
+    <div class="card fu1 tc">
       <div style="font-size:2rem;margin-bottom:10px;">👏</div>
       <h3>All done!</h3>
       <p class="sub" style="font-size:0.9rem;margin-top:8px;">
