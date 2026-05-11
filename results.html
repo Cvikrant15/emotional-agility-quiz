@@ -93,11 +93,8 @@
     const users = store.users || [];
     const dash  = document.getElementById('dashboard');
 
-    const t1Done   = users.filter(u => u.test1).length;
-    const t2Done   = users.filter(u => u.test2).length;
-    const avgScore = t1Done
-      ? Math.round(users.filter(u => u.test1).reduce((s, u) => s + (u.test1.score / u.test1.total) * 100, 0) / t1Done)
-      : 0;
+    const t1Done = users.filter(u => u.test1).length;
+    const t2Done = users.filter(u => u.test2).length;
 
     dash.innerHTML = `
       <div class="fu w100" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 0 8px;">
@@ -120,15 +117,11 @@
         </div>
         <div class="stat-box">
           <div class="stat-num" style="color:var(--accent);">${t1Done}</div>
-          <div class="stat-label">MCQ done</div>
+          <div class="stat-label">Test 1 done</div>
         </div>
         <div class="stat-box">
           <div class="stat-num" style="color:var(--accent2);">${t2Done}</div>
-          <div class="stat-label">This or That done</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" style="color:var(--success);">${avgScore}%</div>
-          <div class="stat-label">Avg MCQ score</div>
+          <div class="stat-label">Test 2 done</div>
         </div>
       </div>
 
@@ -147,9 +140,8 @@
                 <tr>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>MCQ Score</th>
-                  <th>MCQ</th>
-                  <th>This or That</th>
+                  <th>Test 1</th>
+                  <th>Test 2</th>
                   <th>Joined</th>
                 </tr>
               </thead>
@@ -157,8 +149,8 @@
                 ${users.map(u => {
                   const t1  = u.test1;
                   const t2  = u.test2;
-                  const sp  = t1 ? Math.round((t1.score / t1.total) * 100) : null;
                   const col = avatarColor(u.email);
+                  const yesCount = t1 ? t1.answers.filter(a => a.chosen === 'yes').length : null;
                   return `
                     <tr>
                       <td>
@@ -171,13 +163,14 @@
                       <td>
                         ${t1 ? `
                           <div class="bar-inline">
-                            <span style="font-weight:700;min-width:36px;font-size:0.9rem;">${t1.score}/${t1.total}</span>
-                            <div class="mini-bar"><div class="mini-fill" style="width:${sp}%;"></div></div>
-                            <span style="font-size:0.82rem;color:var(--muted);min-width:32px;">${sp}%</span>
+                            <span style="font-weight:700;min-width:28px;font-size:0.88rem;color:var(--success);">${yesCount}Y</span>
+                            <span style="font-weight:700;min-width:28px;font-size:0.88rem;color:var(--danger);">${t1.answers.length - yesCount}N</span>
+                            <div class="mini-bar">
+                              <div class="mini-fill" style="width:${Math.round((yesCount/t1.answers.length)*100)}%;background:var(--success);"></div>
+                            </div>
                           </div>
-                        ` : '<span style="color:var(--muted);">—</span>'}
+                        ` : '<span class="chip chip-skip">Pending</span>'}
                       </td>
-                      <td><span class="chip ${t1 ? 'chip-done' : 'chip-skip'}">${t1 ? 'Done' : 'Pending'}</span></td>
                       <td><span class="chip ${t2 ? 'chip-done' : 'chip-skip'}">${t2 ? 'Done' : 'Pending'}</span></td>
                       <td style="color:var(--muted);font-size:0.85rem;">${fmtDate(u.joinedAt)}</td>
                     </tr>
@@ -188,9 +181,41 @@
           </div>
         </div>
 
+        ${users.filter(u => u.test1).length > 0 ? `
+          <div class="card fu3" style="width:100%;">
+            <h3 style="margin-bottom:6px;">Test 1 — Group Responses</h3>
+            <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">How the group responded to each statement</p>
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              ${MCQ_QUESTIONS.map(q => {
+                const all = users.flatMap(u => u.test1 ? u.test1.answers : []);
+                const qa  = all.filter(a => a.questionId === q.id);
+                const yv  = qa.filter(a => a.chosen === 'yes').length;
+                const nv  = qa.filter(a => a.chosen === 'no').length;
+                const tot = yv + nv;
+                if (!tot) return '';
+                const yp = Math.round((yv / tot) * 100);
+                const np = 100 - yp;
+                return `
+                  <div>
+                    <p style="font-size:0.88rem;font-weight:600;margin-bottom:8px;line-height:1.45;">${q.question}</p>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.82rem;">
+                      <span style="font-weight:700;color:var(--success);">Yes — ${yp}%</span>
+                      <span style="font-weight:700;color:var(--danger);">No — ${np}%</span>
+                    </div>
+                    <div style="height:9px;border-radius:99px;overflow:hidden;display:flex;">
+                      <div style="width:${yp}%;background:var(--success);transition:width .6s ease;"></div>
+                      <div style="flex:1;background:var(--danger);opacity:0.45;"></div>
+                    </div>
+                  </div>
+                `;
+              }).filter(Boolean).join('')}
+            </div>
+          </div>
+        ` : ''}
+
         ${users.filter(u => u.test2).length > 0 ? `
           <div class="card fu3" style="width:100%;">
-            <h3 style="margin-bottom:6px;">This or That — Group Preferences</h3>
+            <h3 style="margin-bottom:6px;">Test 2 — Group Preferences</h3>
             <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">How everyone voted across all ${THIS_OR_THAT.length} questions</p>
             <div style="display:flex;flex-direction:column;gap:16px;">
               ${THIS_OR_THAT.map(q => {

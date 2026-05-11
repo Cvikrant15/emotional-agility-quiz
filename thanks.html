@@ -34,7 +34,6 @@
 
   const t1        = user && user.test1;
   const t2        = user && user.test2;
-  const pct       = t1 ? Math.round((t1.score / t1.total) * 100) : null;
   const firstName = user ? user.name.split(' ')[0] : 'there';
 
   app.innerHTML = `
@@ -46,22 +45,23 @@
       </p>
     </div>
 
-    ${t1 ? `
-      <div class="card fu1">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-          <h3>Your MCQ Score</h3>
-          <span style="font-size:1.5rem;font-weight:800;letter-spacing:-0.04em;color:var(--accent);">
-            ${t1.score} / ${t1.total}
-          </span>
+    ${t1 ? (() => {
+      const yesCount = t1.answers.filter(a => a.chosen === 'yes').length;
+      const noCount  = t1.answers.length - yesCount;
+      return `
+        <div class="card fu1">
+          <h3 style="margin-bottom:14px;">Test 1 — Your responses</h3>
+          <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;height:10px;">
+            <div style="width:${Math.round((yesCount / t1.answers.length) * 100)}%;background:var(--success);transition:width 0.6s ease;"></div>
+            <div style="flex:1;background:var(--danger);opacity:0.5;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:10px;font-size:0.85rem;">
+            <span style="color:var(--success);font-weight:700;">${yesCount} Yes</span>
+            <span style="color:var(--danger);font-weight:700;">${noCount} No</span>
+          </div>
         </div>
-        <div class="progress-bar" style="height:10px;">
-          <div class="progress-fill" style="width:${pct}%;"></div>
-        </div>
-        <p class="sub" style="font-size:0.85rem;margin-top:10px;text-align:right;">
-          ${pct}% &nbsp;·&nbsp; ${pct >= 80 ? '🏆 Excellent' : pct >= 60 ? '🎉 Good job' : pct >= 40 ? '👍 Not bad' : '💪 Keep going'}
-        </p>
-      </div>
-    ` : ''}
+      `;
+    })() : ''}
 
     ${t2 ? (() => {
       const aCount = t2.answers.filter(a => a.chosen === 'a').length;

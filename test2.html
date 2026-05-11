@@ -92,8 +92,18 @@
         <p class="sub" style="text-align:center;font-size:0.84rem;margin-top:18px;">
           No right or wrong — just go with your gut 👇
         </p>
+        <div style="display:flex;justify-content:center;margin-top:14px;">
+          <button class="btn btn-ghost" onclick="skip()" style="font-size:0.82rem;padding:8px 20px;">Skip</button>
+        </div>
       </div>
     `;
+  }
+
+  function skip() {
+    const q = questions[idx];
+    answers.push({ questionId: q.id, a: q.a, b: q.b, chosen: null });
+    idx++;
+    render();
   }
 
   function pick(side) {

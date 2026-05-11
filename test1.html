@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuizLab — MCQ Test</title>
+  <title>QuizLab — Test 1</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,117 +53,105 @@
   }
 
   const app = document.getElementById('app');
-  const KEYS = ['A', 'B', 'C', 'D'];
-  const questions = shuffle(MCQ_QUESTIONS);
-  let idx = 0, score = 0, answered = false;
+  // No shuffle — these statements are shown in fixed order
+  const questions = [...MCQ_QUESTIONS];
+  let idx = 0;
   const answers = [];
 
   function render() {
     if (idx >= questions.length) { showSummary(); return; }
 
-    const q = questions[idx];
+    const q   = questions[idx];
     const pct = Math.round((idx / questions.length) * 100);
 
     app.innerHTML = `
       <div class="progress-wrap fu w100">
         <div class="progress-meta">
-          <span>Question ${idx + 1} <span class="muted">of ${questions.length}</span></span>
+          <span>Statement ${idx + 1} <span class="muted">of ${questions.length}</span></span>
           <span class="muted">${pct}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>
 
       <div class="card fu1">
-        <p style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;">
-          Test 1 &nbsp;·&nbsp; Multiple Choice
+        <p style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:20px;">
+          Test 1 &nbsp;·&nbsp; About Me
         </p>
-        <h2 style="margin-bottom:26px;line-height:1.5;">${q.question}</h2>
 
-        <div class="options" id="opts">
-          ${q.options.map((o, i) => `
-            <button class="opt" data-i="${i}" onclick="pick(${i})">
-              <span class="opt-key">${KEYS[i]}</span>
-              <span>${o}</span>
-            </button>
-          `).join('')}
+        <h2 style="line-height:1.55;margin-bottom:32px;font-size:1.2rem;font-weight:600;">
+          "${q.question}"
+        </h2>
+
+        <div class="yn-grid">
+          <button class="yn-btn yn-yes" onclick="pick('yes')">Yes</button>
+          <button class="yn-btn yn-no"  onclick="pick('no')">No</button>
         </div>
 
-        <div id="fb" class="inline-feedback"></div>
-
-        <div style="margin-top:22px;display:flex;justify-content:flex-end;">
-          <button class="btn btn-primary" id="nxt" onclick="next()" disabled>
-            ${idx === questions.length - 1 ? 'Finish Test' : 'Next question'} &nbsp;→
-          </button>
-        </div>
+        <p class="sub" style="text-align:center;font-size:0.84rem;margin-top:18px;">
+          There are no right or wrong answers — just be honest 💙
+        </p>
       </div>
     `;
   }
 
-  function pick(i) {
-    if (answered) return;
-    answered = true;
-
+  function pick(choice) {
     const q = questions[idx];
-    const correct = i === q.answer;
-    if (correct) score++;
+    answers.push({ questionId: q.id, question: q.question, chosen: choice });
 
-    const btns = document.querySelectorAll('.opt');
-    btns.forEach(b => b.disabled = true);
-    btns[i].classList.add(correct ? 'correct' : 'wrong');
-    if (!correct) btns[q.answer].classList.add('correct');
+    const btnYes = document.querySelector('.yn-yes');
+    const btnNo  = document.querySelector('.yn-no');
+    btnYes.disabled = true;
+    btnNo.disabled  = true;
 
-    answers.push({ questionId: q.id, question: q.question, chosen: i, correct: q.answer, isCorrect: correct });
+    const chosen = choice === 'yes' ? btnYes : btnNo;
+    chosen.classList.add('chosen');
+    chosen.style.transform = 'translateY(-3px) scale(1.03)';
 
-    const fb = document.getElementById('fb');
-    fb.className = `inline-feedback ${correct ? 'correct' : 'wrong'}`;
-    fb.innerHTML = correct
-      ? `<span>✓</span><span>Correct! Well done.</span>`
-      : `<span>✗</span><span>The correct answer was <strong>${q.options[q.answer]}</strong></span>`;
-    requestAnimationFrame(() => fb.classList.add('show'));
-
-    document.getElementById('nxt').disabled = false;
-  }
-
-  function next() {
-    answered = false;
-    idx++;
-    render();
+    setTimeout(() => { idx++; render(); }, 420);
   }
 
   function showSummary() {
     testComplete = true;
-    saveTest1(answers, score, questions.length);
-    const pct = Math.round((score / questions.length) * 100);
-    const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '👍' : '💪';
-    const msg = pct >= 80 ? 'Excellent work!' : pct >= 60 ? 'Good job!' : pct >= 40 ? 'Not bad!' : 'Keep practising!';
+    saveTest1(answers);
+
+    const yesCount = answers.filter(a => a.chosen === 'yes').length;
+    const noCount  = answers.length - yesCount;
 
     app.innerHTML = `
       <div class="tc fu" style="padding:12px 0 4px;">
-        <div style="font-size:3rem;margin-bottom:12px;">${emoji}</div>
-        <h1>${score} <span style="color:var(--muted);font-size:1.4rem;">/ ${questions.length}</span></h1>
-        <p class="sub" style="margin-top:8px;">${pct}% correct &nbsp;·&nbsp; ${msg}</p>
+        <div style="font-size:3rem;margin-bottom:12px;">✅</div>
+        <h1>Test 1 done!</h1>
+        <p class="sub" style="margin-top:8px;">Thanks for being honest. Here's a quick look at your responses.</p>
       </div>
 
-      <div class="card fu1">
-        <h3 style="margin-bottom:18px;">Review your answers</h3>
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          ${answers.map((a, n) => {
-            const q = questions.find(q => q.id === a.questionId);
-            return `
-              <div style="padding:14px 16px;background:var(--bg);border-radius:10px;border-left:3px solid ${a.isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                <p style="font-size:0.78rem;color:var(--muted);font-weight:700;margin-bottom:5px;">Q${n + 1}</p>
-                <p style="font-weight:600;margin-bottom:6px;line-height:1.4;">${a.question}</p>
-                <p style="font-size:0.88rem;color:${a.isCorrect ? 'var(--success)' : 'var(--danger)'};">
-                  ${a.isCorrect ? '✓' : '✗'} Your answer: ${q.options[a.chosen]}
-                  ${!a.isCorrect ? `<span style="color:var(--muted)"> &nbsp;·&nbsp; Correct: ${q.options[a.correct]}</span>` : ''}
-                </p>
-              </div>
-            `;
-          }).join('')}
+      <div class="fu1 w100" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="card tc" style="padding:24px 16px;">
+          <div style="font-size:2.2rem;font-weight:800;color:var(--success);letter-spacing:-0.04em;">${yesCount}</div>
+          <div class="sub" style="font-size:0.82rem;margin-top:4px;">Yes</div>
+        </div>
+        <div class="card tc" style="padding:24px 16px;">
+          <div style="font-size:2.2rem;font-weight:800;color:var(--danger);letter-spacing:-0.04em;">${noCount}</div>
+          <div class="sub" style="font-size:0.82rem;margin-top:4px;">No</div>
         </div>
       </div>
 
-      <div class="fu2 w100">
+      <div class="card fu2">
+        <h3 style="margin-bottom:18px;">Your responses</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${answers.map((a, n) => `
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--bg);border-radius:10px;
+              border-left:3px solid ${a.chosen === 'yes' ? 'var(--success)' : 'var(--danger)'};">
+              <span style="font-size:0.75rem;font-weight:700;color:var(--muted);min-width:22px;padding-top:2px;">${n + 1}</span>
+              <span style="flex:1;font-size:0.9rem;line-height:1.5;">${a.question}</span>
+              <span style="font-size:0.82rem;font-weight:800;color:${a.chosen === 'yes' ? 'var(--success)' : 'var(--danger)'};flex-shrink:0;padding-top:2px;">
+                ${a.chosen === 'yes' ? 'Yes' : 'No'}
+              </span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="fu3 w100">
         <a href="test2.html" class="btn btn-primary btn-full">Continue to Test 2 &nbsp;→</a>
       </div>
     `;

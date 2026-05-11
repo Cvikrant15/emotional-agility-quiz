@@ -279,6 +279,48 @@ input::placeholder { color: var(--muted); font-weight: 400; }
   flex-shrink: 0;
 }
 
+/* ── YES / NO BUTTONS ── */
+.yn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+}
+
+.yn-btn {
+  padding: 36px 20px;
+  border-radius: var(--radius);
+  border: 2.5px solid var(--border);
+  background: var(--bg);
+  font-size: 1.4rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(.4,0,.2,1);
+  text-align: center;
+  font-family: inherit;
+  letter-spacing: -0.02em;
+}
+
+.yn-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.yn-yes { color: var(--success); }
+.yn-no  { color: var(--danger); }
+
+.yn-yes:hover:not(:disabled),
+.yn-yes.chosen {
+  border-color: var(--success);
+  background: rgba(0,184,148,0.09);
+}
+
+.yn-no:hover:not(:disabled),
+.yn-no.chosen {
+  border-color: var(--danger);
+  background: rgba(229,83,83,0.07);
+}
+
 /* ── THIS OR THAT ── */
 .tot-grid {
   display: grid;

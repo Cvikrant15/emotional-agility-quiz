@@ -1,64 +1,14 @@
 const MCQ_QUESTIONS = [
-  {
-    id: 1,
-    question: "Which country is credited with inventing sushi?",
-    options: ["China", "Japan", "South Korea", "Vietnam"],
-    answer: 1
-  },
-  {
-    id: 2,
-    question: "Which city is nicknamed 'The City of Love'?",
-    options: ["Rome", "Venice", "Paris", "Vienna"],
-    answer: 2
-  },
-  {
-    id: 3,
-    question: "What is the main ingredient in traditional guacamole?",
-    options: ["Tomato", "Lime", "Onion", "Avocado"],
-    answer: 3
-  },
-  {
-    id: 4,
-    question: "In which country would you find the Great Barrier Reef?",
-    options: ["Indonesia", "Philippines", "Australia", "Fiji"],
-    answer: 2
-  },
-  {
-    id: 5,
-    question: "Which spice gives paella its distinctive golden colour?",
-    options: ["Turmeric", "Saffron", "Paprika", "Cumin"],
-    answer: 1
-  },
-  {
-    id: 6,
-    question: "Pad Thai is the national dish of which country?",
-    options: ["Malaysia", "Vietnam", "Indonesia", "Thailand"],
-    answer: 3
-  },
-  {
-    id: 7,
-    question: "Which ocean do you cross when flying from Europe to New York?",
-    options: ["Indian", "Pacific", "Southern", "Atlantic"],
-    answer: 3
-  },
-  {
-    id: 8,
-    question: "What type of pastry is used in a classic French croissant?",
-    options: ["Choux", "Shortcrust", "Filo", "Laminated dough"],
-    answer: 3
-  },
-  {
-    id: 9,
-    question: "The ancient city of Petra is carved into rock in which country?",
-    options: ["Egypt", "Iraq", "Jordan", "Saudi Arabia"],
-    answer: 2
-  },
-  {
-    id: 10,
-    question: "Which country produces the most coffee in the world?",
-    options: ["Colombia", "Vietnam", "Ethiopia", "Brazil"],
-    answer: 3
-  }
+  { id: 1,  question: "When I don't do well in something, I blame myself." },
+  { id: 2,  question: "When I am upset, I can calm myself down on my own." },
+  { id: 3,  question: "I keep trying even when I lose." },
+  { id: 4,  question: "I try to do things that seem difficult to me." },
+  { id: 5,  question: "I know it is okay to sometimes feel sad, angry or scared." },
+  { id: 6,  question: "It is okay to make mistakes when I am trying something for the first time." },
+  { id: 7,  question: "It is hard for me to forget when someone hurts me." },
+  { id: 8,  question: "I am kind to myself even when I don't like something about myself." },
+  { id: 9,  question: "I can focus on what I am doing without worrying too much about the past or the future." },
+  { id: 10, question: "I can pay attention to what I am doing right now." }
 ];
 
 const THIS_OR_THAT = [

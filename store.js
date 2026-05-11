@@ -26,13 +26,13 @@ function loginUser(name, email) {
   sessionStorage.setItem('ql_email', email);
 }
 
-function saveTest1(answers, score, total) {
+function saveTest1(answers) {
   const email = sessionStorage.getItem('ql_email');
   if (!email) return;
   const store = getStore();
   const user = store.users.find(u => u.email === email);
   if (user) {
-    user.test1 = { answers, score, total, completedAt: new Date().toISOString() };
+    user.test1 = { answers, completedAt: new Date().toISOString() };
     saveStore(store);
   }
 }
