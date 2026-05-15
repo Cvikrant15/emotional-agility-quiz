@@ -5,6 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QuizLab — Admin Results</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 16px;
+      border: none;
+      background: none;
+      border-radius: 7px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .tab-btn.active {
+      background: var(--white);
+      color: var(--accent);
+      box-shadow: 0 1px 4px rgba(108,92,231,0.12);
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.5); }
+
+    .ea-dist-bar {
+      display: flex;
+      height: 12px;
+      border-radius: 99px;
+      overflow: hidden;
+      width: 100%;
+      gap: 2px;
+    }
+    .ea-dist-seg { border-radius: 99px; }
+
+    .ea-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+    .ea-legend-row { display: flex; align-items: center; gap: 10px; }
+    .ea-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .ea-legend-label { font-size: 0.88rem; font-weight: 600; flex: 1; }
+    .ea-legend-count { font-size: 0.82rem; font-weight: 700; min-width: 52px; text-align: right; }
+    .ea-legend-bar { width: 80px; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .ea-legend-fill { height: 100%; border-radius: 99px; }
+
+    .q-row { display: flex; flex-direction: column; gap: 8px; }
+    .q-label { font-size: 0.88rem; font-weight: 600; line-height: 1.45; }
+    .split-bar { height: 8px; border-radius: 99px; overflow: hidden; display: flex; }
+
+    .pref-labels { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.88rem; }
+    .vs-pill {
+      font-size: 0.7rem; font-weight: 800; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 99px; padding: 2px 8px; flex-shrink: 0;
+    }
+
+    /* Expandable participant rows */
+    .p-row { cursor: pointer; }
+    .p-row:hover td { background: var(--accent-light) !important; }
+    .p-row.open td { background: var(--accent-light) !important; }
+    .p-caret {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 5px;
+      font-size: 0.6rem; color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      margin-right: 8px; flex-shrink: 0; transition: transform 0.2s;
+    }
+    .p-row.open .p-caret { transform: rotate(90deg); color: var(--accent); background: var(--accent-light); border-color: var(--accent); }
+    .p-detail td { padding: 0 !important; border-bottom: 2px solid var(--accent) !important; }
+    .p-detail-inner {
+      padding: 20px 24px 24px;
+      background: var(--bg);
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    .detail-section-label {
+      font-size: 0.74rem; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .07em;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .ans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 8px;
+    }
+    .ans-card {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+      padding: 10px 12px; border-radius: 10px;
+      background: var(--white); border: 1.5px solid var(--border);
+    }
+    .ans-text { font-size: 0.82rem; line-height: 1.45; flex: 1; color: var(--text); }
+    .ans-badge {
+      flex-shrink: 0; padding: 2px 10px; border-radius: 99px;
+      font-size: 0.72rem; font-weight: 800;
+    }
+    .ans-yes { background: rgba(0,184,148,0.12); color: var(--success); }
+    .ans-no  { background: rgba(229,83,83,0.08);  color: var(--danger); }
+    .tot-pair {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tot-option {
+      flex: 1; font-size: 0.84rem; padding: 8px 12px; border-radius: 9px;
+      border: 1.5px solid transparent; transition: none;
+    }
+    .tot-option.chosen-a { font-weight: 700; background: var(--accent-light); color: var(--accent); border-color: var(--accent); text-align: right; }
+    .tot-option.chosen-b { font-weight: 700; background: rgba(0,206,201,0.08); color: var(--accent2); border-color: var(--accent2); }
+    .tot-option.unchosen { color: var(--muted); font-weight: 400; }
+    .tot-option.side-a   { text-align: right; }
+  </style>
 </head>
 <body>
 
@@ -40,51 +151,51 @@
   </div>
 </div>
 
-<!-- ── Dashboard (hidden until unlocked) ── -->
+<!-- ── Dashboard ── -->
 <div class="page wide hidden" id="dashboard"></div>
 
 <script src="data.js"></script>
 <script src="seed.js"></script>
 <script src="store.js"></script>
 <script>
-  const ADMINS = {
-    admin1: 'QuizAdmin1!',
-    admin2: 'QuizAdmin2!'
-  };
+  const ADMINS = { admin1: 'QuizAdmin1!', admin2: 'QuizAdmin2!' };
 
-  const COLORS = ['#6c5ce7','#00cec9','#fd79a8','#e17055','#00b894','#0984e3','#a29bfe','#fdcb6e'];
+  const EA_TIERS = [
+    { min: 10, text: 'High EA',       color: '#00b894' },
+    { min: 8,  text: 'Strong EA',     color: '#6c5ce7' },
+    { min: 6,  text: 'Moderate EA',   color: '#00cec9' },
+    { min: 4,  text: 'Developing EA', color: '#e17055' },
+    { min: 0,  text: 'Early EA',      color: '#e55353' },
+  ];
+
+  const AVATAR_COLORS = ['#6c5ce7','#00cec9','#fd79a8','#e17055','#00b894','#0984e3','#a29bfe','#fdcb6e'];
 
   let currentAdmin = null;
 
   function avatarColor(email) {
     let h = 0;
     for (let i = 0; i < email.length; i++) h = email.charCodeAt(i) + ((h << 5) - h);
-    return COLORS[Math.abs(h) % COLORS.length];
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
   }
 
   function initials(name) {
     return name.trim().split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  function eaLabel(yesCount) {
-    if (yesCount >= 10) return { text: 'High emotional agility',      color: '#00b894' };
-    if (yesCount >= 8)  return { text: 'Strong emotional agility',    color: '#6c5ce7' };
-    if (yesCount >= 6)  return { text: 'Moderate emotional agility',  color: '#00cec9' };
-    if (yesCount >= 4)  return { text: 'Developing emotional agility',color: '#e17055' };
-    return               { text: 'Early emotional agility',           color: '#e55353' };
+  function eaTier(yesCount) {
+    return EA_TIERS.find(t => yesCount >= t.min) || EA_TIERS[EA_TIERS.length - 1];
   }
 
   function fmtDate(iso) {
     return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  // ── Gate form ──
+  // ── Gate ──
   document.getElementById('gateForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const un  = document.getElementById('un').value.trim().toLowerCase();
     const pw  = document.getElementById('pw').value;
     const err = document.getElementById('gateErr');
-
     if (ADMINS[un] && ADMINS[un] === pw) {
       currentAdmin = un;
       document.getElementById('gate').classList.add('hidden');
@@ -98,22 +209,21 @@
     }
   });
 
-  // ── Dashboard ──
+  // ── Dashboard shell ──
   function renderDashboard() {
-    const store = getStore();
-    const users = store.users || [];
-    const dash  = document.getElementById('dashboard');
+    const store   = getStore();
+    const users   = store.users || [];
+    const t1Users = users.filter(u => u.test1);
+    const t2Users = users.filter(u => u.test2);
+    const avgEA   = t1Users.length > 0
+      ? (t1Users.reduce((s, u) => s + u.test1.answers.filter(a => a.chosen === 'yes').length, 0) / t1Users.length).toFixed(1)
+      : null;
 
-    const t1Done = users.filter(u => u.test1).length;
-    const t2Done = users.filter(u => u.test2).length;
-
-    dash.innerHTML = `
+    document.getElementById('dashboard').innerHTML = `
       <div class="fu w100" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 0 8px;">
         <div>
           <h1 style="font-size:1.6rem;">Results Dashboard</h1>
-          <p class="sub" style="font-size:0.85rem;margin-top:3px;">
-            All participants · viewing as <strong>${currentAdmin}</strong>
-          </p>
+          <p class="sub" style="font-size:0.85rem;margin-top:3px;">All participants · viewing as <strong>${currentAdmin}</strong></p>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-ghost" onclick="exportCSV()" style="font-size:0.85rem;padding:10px 18px;">↓ Export CSV</button>
@@ -127,13 +237,19 @@
           <div class="stat-label">Participants</div>
         </div>
         <div class="stat-box">
-          <div class="stat-num" style="color:var(--accent);">${t1Done}</div>
+          <div class="stat-num" style="color:var(--accent);">${t1Users.length}</div>
           <div class="stat-label">Test 1 done</div>
         </div>
         <div class="stat-box">
-          <div class="stat-num" style="color:var(--accent2);">${t2Done}</div>
+          <div class="stat-num" style="color:var(--accent2);">${t2Users.length}</div>
           <div class="stat-label">Test 2 done</div>
         </div>
+        ${avgEA !== null ? `
+          <div class="stat-box">
+            <div class="stat-num" style="color:#00b894;">${avgEA}<span style="font-size:1rem;font-weight:600;color:var(--muted);">/10</span></div>
+            <div class="stat-label">Avg EA Score</div>
+          </div>
+        ` : ''}
       </div>
 
       ${users.length === 0 ? `
@@ -143,142 +259,317 @@
           <p class="sub" style="margin-top:6px;font-size:0.88rem;">Participants appear here once they log in.</p>
         </div>
       ` : `
-        <div class="card fu2" style="width:100%;">
-          <h3 style="margin-bottom:18px;">All Participants</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Test 1</th>
-                  <th>Test 2</th>
-                  <th>Joined</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                ${users.map(u => {
-                  const t1  = u.test1;
-                  const t2  = u.test2;
-                  const col = avatarColor(u.email);
-                  const yesCount = t1 ? t1.answers.filter(a => a.chosen === 'yes').length : null;
-                  return `
-                    <tr>
-                      <td>
-                        <div style="display:flex;align-items:center;">
-                          <span class="avatar" style="background:${col};">${initials(u.name)}</span>
-                          <span style="font-weight:600;">${u.name}</span>
-                        </div>
-                      </td>
-                      <td style="color:var(--muted);font-size:0.85rem;">${u.email}</td>
-                      <td>
-                        ${t1 ? (() => {
-                          const ea = eaLabel(yesCount);
-                          return `
-                            <div style="display:flex;flex-direction:column;gap:5px;">
-                              <span style="font-size:0.78rem;font-weight:700;color:${ea.color};">${ea.text}</span>
-                              <div class="bar-inline">
-                                <span style="font-weight:700;min-width:24px;font-size:0.82rem;color:var(--success);">${yesCount}Y</span>
-                                <span style="font-weight:700;min-width:24px;font-size:0.82rem;color:var(--danger);">${t1.answers.length - yesCount}N</span>
-                                <div class="mini-bar"><div class="mini-fill" style="width:${Math.round((yesCount/t1.answers.length)*100)}%;background:${ea.color};"></div></div>
-                              </div>
-                            </div>`;
-                        })() : '<span class="chip chip-skip">Pending</span>'}
-                      </td>
-                      <td><span class="chip ${t2 ? 'chip-done' : 'chip-skip'}">${t2 ? 'Done' : 'Pending'}</span></td>
-                      <td style="color:var(--muted);font-size:0.85rem;">${fmtDate(u.joinedAt)}</td>
-                      <td>
-                        <button onclick="deleteUser('${u.email}')"
-                          style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:4px 8px;border-radius:6px;transition:all 0.15s;"
-                          onmouseover="this.style.color='var(--danger)';this.style.background='rgba(229,83,83,0.08)'"
-                          onmouseout="this.style.color='var(--muted)';this.style.background='none'"
-                          title="Delete this participant">✕</button>
-                      </td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
-          </div>
+        <div class="tabs fu2 w100" id="tabBar">
+          <button class="tab-btn active" data-tab="participants">Participants</button>
+          <button class="tab-btn" data-tab="test1">Test 1 — About Me</button>
+          <button class="tab-btn" data-tab="test2">Test 2 — This or That</button>
         </div>
 
-        ${users.filter(u => u.test1).length > 0 ? `
-          <div class="card fu3" style="width:100%;">
-            <h3 style="margin-bottom:6px;">Test 1 — Group Responses</h3>
-            <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">How the group responded to each statement</p>
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              ${MCQ_QUESTIONS.map(q => {
-                const all = users.flatMap(u => u.test1 ? u.test1.answers : []);
-                const qa  = all.filter(a => a.questionId === q.id);
-                const yv  = qa.filter(a => a.chosen === 'yes').length;
-                const nv  = qa.filter(a => a.chosen === 'no').length;
-                const tot = yv + nv;
-                if (!tot) return '';
-                const yp = Math.round((yv / tot) * 100);
-                const np = 100 - yp;
-                return `
-                  <div>
-                    <p style="font-size:0.88rem;font-weight:600;margin-bottom:8px;line-height:1.45;">${q.question}</p>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:0.82rem;">
-                      <span style="font-weight:700;color:var(--success);">Yes — ${yp}%</span>
-                      <span style="font-weight:700;color:var(--danger);">No — ${np}%</span>
-                    </div>
-                    <div style="height:9px;border-radius:99px;overflow:hidden;display:flex;">
-                      <div style="width:${yp}%;background:var(--success);transition:width .6s ease;"></div>
-                      <div style="flex:1;background:var(--danger);opacity:0.45;"></div>
-                    </div>
-                  </div>
-                `;
-              }).filter(Boolean).join('')}
-            </div>
-          </div>
-        ` : ''}
+        <div class="tab-panel w100" id="tab-participants">${renderParticipantsTab(users)}</div>
+        <div class="tab-panel w100 hidden" id="tab-test1">${renderTest1Tab(users)}</div>
+        <div class="tab-panel w100 hidden" id="tab-test2">${renderTest2Tab(users)}</div>
 
-        ${users.filter(u => u.test2).length > 0 ? `
-          <div class="card fu3" style="width:100%;">
-            <h3 style="margin-bottom:6px;">Test 2 — Group Preferences</h3>
-            <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">How everyone voted across all ${THIS_OR_THAT.length} questions</p>
-            <div style="display:flex;flex-direction:column;gap:16px;">
-              ${THIS_OR_THAT.map(q => {
-                const all = users.flatMap(u => u.test2 ? u.test2.answers : []);
-                const qa  = all.filter(a => a.questionId === q.id);
-                const av  = qa.filter(a => a.chosen === 'a').length;
-                const bv  = qa.filter(a => a.chosen === 'b').length;
-                const tot = av + bv;
-                if (!tot) return '';
-                const ap = Math.round((av / tot) * 100);
-                const bp = 100 - ap;
-                return `
-                  <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:7px;font-size:0.88rem;">
-                      <span style="font-weight:${ap >= bp ? 700 : 400};color:${ap >= bp ? 'var(--accent)' : 'var(--muted)'};">
-                        ${q.a} <span style="font-size:0.78rem;">(${ap}%)</span>
-                      </span>
-                      <span style="font-weight:${bp > ap ? 700 : 400};color:${bp > ap ? 'var(--accent2)' : 'var(--muted)'};">
-                        ${q.b} <span style="font-size:0.78rem;">(${bp}%)</span>
-                      </span>
-                    </div>
-                    <div style="height:9px;border-radius:99px;overflow:hidden;display:flex;">
-                      <div style="width:${ap}%;background:var(--accent);transition:width .6s ease;"></div>
-                      <div style="flex:1;background:var(--accent2);"></div>
-                    </div>
-                  </div>
-                `;
-              }).filter(Boolean).join('')}
-            </div>
-          </div>
-        ` : ''}
-
-        <div class="fu3" style="width:100%;">
+        <div class="fu3 w100">
           <button class="btn btn-ghost btn-full" style="color:var(--danger);border-color:var(--danger);" onclick="clearAll()">
             Clear all participant data
           </button>
         </div>
       `}
     `;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      });
+    });
   }
 
+  // ── Tab: Participants ──
+  function renderParticipantsTab(users) {
+    const rows = users.map((u, idx) => {
+      const t1       = u.test1;
+      const t2       = u.test2;
+      const col      = avatarColor(u.email);
+      const yesCount = t1 ? t1.answers.filter(a => a.chosen === 'yes').length : null;
+      const tier     = yesCount !== null ? eaTier(yesCount) : null;
+      const t2Label  = !t2 ? ['chip-skip', 'Pending'] : t2.skipped ? ['chip-skip', 'Skipped'] : ['chip-done', 'Done'];
+      return `
+        <tr class="p-row" id="prow-${idx}" onclick="toggleDetail(${idx})">
+          <td>
+            <div style="display:flex;align-items:center;">
+              <span class="p-caret" id="caret-${idx}">▶</span>
+              <span class="avatar" style="background:${col};">${initials(u.name)}</span>
+              <span style="font-weight:600;">${u.name}</span>
+            </div>
+          </td>
+          <td style="color:var(--muted);font-size:0.85rem;">${u.email}</td>
+          <td>
+            ${tier ? `
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <span style="display:inline-block;padding:3px 10px;border-radius:99px;font-size:0.74rem;font-weight:700;background:${tier.color}1a;color:${tier.color};">${tier.text}</span>
+                <span style="font-size:0.8rem;color:var(--muted);font-weight:600;padding-left:2px;">${yesCount} yes · ${t1.answers.length - yesCount} no</span>
+              </div>
+            ` : '<span class="chip chip-skip">Pending</span>'}
+          </td>
+          <td><span class="chip ${t2Label[0]}">${t2Label[1]}</span></td>
+          <td style="color:var(--muted);font-size:0.85rem;">${fmtDate(u.joinedAt)}</td>
+          <td>
+            <button onclick="event.stopPropagation(); deleteUser('${u.email}')"
+              style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem;padding:4px 8px;border-radius:6px;transition:all 0.15s;"
+              onmouseover="this.style.color='var(--danger)';this.style.background='rgba(229,83,83,0.08)'"
+              onmouseout="this.style.color='var(--muted)';this.style.background='none'"
+              title="Remove participant">✕</button>
+          </td>
+        </tr>
+        <tr class="p-detail hidden" id="detail-${idx}">
+          <td colspan="6">
+            <div class="p-detail-inner">${renderUserDetail(u)}</div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <div class="card" style="width:100%;">
+        <h3 style="margin-bottom:4px;">${users.length} participant${users.length !== 1 ? 's' : ''}</h3>
+        <p class="sub" style="font-size:0.83rem;margin-bottom:18px;">Click any row to see individual responses</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Test 1 — EA</th>
+                <th>Test 2</th>
+                <th>Joined</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleDetail(idx) {
+    const row    = document.getElementById('prow-'   + idx);
+    const detail = document.getElementById('detail-' + idx);
+    const caret  = document.getElementById('caret-'  + idx);
+    const open   = detail.classList.toggle('hidden');
+    row.classList.toggle('open', !open);
+    caret.textContent = open ? '▶' : '▼';
+  }
+
+  function renderUserDetail(user) {
+    if (!user.test1 && !user.test2) {
+      return '<p class="sub" style="text-align:center;padding:8px 0;">No responses recorded yet.</p>';
+    }
+
+    let html = '';
+
+    if (user.test1) {
+      const yesCount = user.test1.answers.filter(a => a.chosen === 'yes').length;
+      const tier = eaTier(yesCount);
+      html += `
+        <div>
+          <div class="detail-section-label">
+            Test 1 — About Me
+            <span style="padding:3px 10px;border-radius:99px;font-size:0.72rem;font-weight:700;background:${tier.color}1a;color:${tier.color};">${tier.text}</span>
+            <span style="font-weight:600;color:var(--muted);">${yesCount} / ${user.test1.answers.length}</span>
+          </div>
+          <div class="ans-grid">
+            ${user.test1.answers.map(a => {
+              const yes = a.chosen === 'yes';
+              return `
+                <div class="ans-card">
+                  <span class="ans-text">${a.question}</span>
+                  <span class="ans-badge ${yes ? 'ans-yes' : 'ans-no'}">${yes ? 'Yes' : 'No'}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    if (user.test2) {
+      if (user.test2.skipped) {
+        html += `
+          <div>
+            <div class="detail-section-label">Test 2 — This or That</div>
+            <p class="sub" style="font-size:0.85rem;">Participant skipped this section.</p>
+          </div>
+        `;
+      } else {
+        html += `
+          <div>
+            <div class="detail-section-label">Test 2 — This or That</div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              ${user.test2.answers.map(a => {
+                const choseA = a.chosen === 'a';
+                return `
+                  <div class="tot-pair">
+                    <span class="tot-option side-a ${choseA ? 'chosen-a' : 'unchosen'}">${a.a}</span>
+                    <span class="vs-pill">VS</span>
+                    <span class="tot-option ${!choseA ? 'chosen-b' : 'unchosen'}">${a.b}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    return html;
+  }
+
+  // ── Tab: Test 1 ──
+  function renderTest1Tab(users) {
+    const t1Users = users.filter(u => u.test1);
+    if (t1Users.length === 0) {
+      return `<div class="card tc" style="width:100%;"><p class="sub" style="padding:20px 0;">No Test 1 responses yet.</p></div>`;
+    }
+
+    // EA distribution
+    const dist = EA_TIERS.map(tier => ({
+      ...tier,
+      count: t1Users.filter(u => eaTier(u.test1.answers.filter(a => a.chosen === 'yes').length).text === tier.text).length
+    }));
+    const total = t1Users.length;
+
+    const distCard = `
+      <div class="card" style="width:100%;margin-bottom:0;">
+        <h3 style="margin-bottom:4px;">Emotional Agility Distribution</h3>
+        <p class="sub" style="font-size:0.85rem;margin-bottom:18px;">${total} response${total !== 1 ? 's' : ''} across 5 tiers</p>
+
+        <div class="ea-dist-bar">
+          ${dist.filter(d => d.count > 0).map(d => `
+            <div class="ea-dist-seg" style="background:${d.color};flex:${d.count};" title="${d.text}: ${d.count}"></div>
+          `).join('')}
+        </div>
+
+        <div class="ea-legend">
+          ${dist.map(d => {
+            const pct = total > 0 ? Math.round((d.count / total) * 100) : 0;
+            return `
+              <div class="ea-legend-row">
+                <div class="ea-dot" style="background:${d.color};opacity:${d.count > 0 ? 1 : 0.3};"></div>
+                <span class="ea-legend-label" style="color:${d.count > 0 ? 'var(--text)' : 'var(--muted)'};">${d.text}</span>
+                <div class="ea-legend-bar">
+                  <div class="ea-legend-fill" style="width:${pct}%;background:${d.color};"></div>
+                </div>
+                <span class="ea-legend-count" style="color:${d.count > 0 ? 'var(--text)' : 'var(--muted)'};">
+                  ${d.count > 0 ? `${d.count} · ${pct}%` : '—'}
+                </span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    // Per-question group responses
+    const qRows = MCQ_QUESTIONS.map((q, i) => {
+      const all = t1Users.flatMap(u => u.test1.answers);
+      const qa  = all.filter(a => a.questionId === q.id);
+      const yv  = qa.filter(a => a.chosen === 'yes').length;
+      const nv  = qa.filter(a => a.chosen === 'no').length;
+      const tot = yv + nv;
+      if (!tot) return '';
+      const yp = Math.round((yv / tot) * 100);
+      const np = 100 - yp;
+      return `
+        <div class="q-row">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <span style="font-size:0.74rem;font-weight:800;color:var(--muted);min-width:18px;">${i + 1}.</span>
+            <span class="q-label">${q.question}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:700;padding-left:26px;">
+            <span style="color:var(--success);">Yes — ${yp}% <span style="font-weight:400;color:var(--muted);">(${yv})</span></span>
+            <span style="color:var(--danger);">No — ${np}% <span style="font-weight:400;color:var(--muted);">(${nv})</span></span>
+          </div>
+          <div class="split-bar" style="margin-left:26px;">
+            <div style="width:${yp}%;background:var(--success);transition:width .6s ease;"></div>
+            <div style="flex:1;background:var(--danger);opacity:0.3;"></div>
+          </div>
+        </div>
+      `;
+    }).filter(Boolean).join('');
+
+    const qCard = `
+      <div class="card" style="width:100%;">
+        <h3 style="margin-bottom:4px;">Group Responses</h3>
+        <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">How the group answered each statement</p>
+        <div style="display:flex;flex-direction:column;gap:20px;">${qRows}</div>
+      </div>
+    `;
+
+    return `<div style="display:flex;flex-direction:column;gap:16px;width:100%;">${distCard}${qCard}</div>`;
+  }
+
+  // ── Tab: Test 2 ──
+  function renderTest2Tab(users) {
+    const t2Users = users.filter(u => u.test2 && !u.test2.skipped && u.test2.answers.length > 0);
+    const skipped = users.filter(u => u.test2 && u.test2.skipped).length;
+
+    if (t2Users.length === 0) {
+      return `<div class="card tc" style="width:100%;"><p class="sub" style="padding:20px 0;">No Test 2 responses yet.${skipped > 0 ? ` (${skipped} skipped)` : ''}</p></div>`;
+    }
+
+    const rows = THIS_OR_THAT.map((q, i) => {
+      const all = t2Users.flatMap(u => u.test2.answers);
+      const qa  = all.filter(a => a.questionId === q.id);
+      const av  = qa.filter(a => a.chosen === 'a').length;
+      const bv  = qa.filter(a => a.chosen === 'b').length;
+      const tot = av + bv;
+      if (!tot) return '';
+      const ap   = Math.round((av / tot) * 100);
+      const bp   = 100 - ap;
+      const aWin = ap >= bp;
+      return `
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="pref-labels">
+            <span style="flex:1;font-weight:${aWin ? 700 : 500};color:${aWin ? 'var(--accent)' : 'var(--muted)'};">
+              ${q.a}
+              <span style="font-size:0.8rem;margin-left:4px;">${ap}%</span>
+              ${aWin ? '<span style="font-size:0.72rem;margin-left:4px;">▲</span>' : ''}
+            </span>
+            <span class="vs-pill">VS</span>
+            <span style="flex:1;text-align:right;font-weight:${!aWin ? 700 : 500};color:${!aWin ? 'var(--accent2)' : 'var(--muted)'};">
+              ${!aWin ? '<span style="font-size:0.72rem;margin-right:4px;">▲</span>' : ''}
+              ${q.b}
+              <span style="font-size:0.8rem;margin-left:4px;">${bp}%</span>
+            </span>
+          </div>
+          <div class="split-bar">
+            <div style="width:${ap}%;background:var(--accent);transition:width .6s ease;"></div>
+            <div style="flex:1;background:var(--accent2);opacity:0.6;"></div>
+          </div>
+          <div style="text-align:center;font-size:0.75rem;color:var(--muted);font-weight:600;">${tot} vote${tot !== 1 ? 's' : ''}</div>
+        </div>
+      `;
+    }).filter(Boolean).join('');
+
+    const skippedNote = skipped > 0
+      ? `<p class="sub" style="font-size:0.82rem;margin-top:4px;">${skipped} participant${skipped !== 1 ? 's' : ''} skipped this section</p>`
+      : '';
+
+    return `
+      <div class="card" style="width:100%;">
+        <h3 style="margin-bottom:4px;">Group Preferences</h3>
+        <p class="sub" style="font-size:0.85rem;margin-bottom:2px;">${t2Users.length} participant${t2Users.length !== 1 ? 's' : ''} across ${THIS_OR_THAT.length} questions</p>
+        ${skippedNote}
+        <div style="display:flex;flex-direction:column;gap:22px;margin-top:22px;">${rows}</div>
+      </div>
+    `;
+  }
+
+  // ── Actions ──
   function logout() {
     currentAdmin = null;
     document.getElementById('dashboard').classList.add('hidden');
@@ -299,25 +590,27 @@
 
   function clearAll() {
     if (!confirm('Delete ALL participant data? This cannot be undone.')) return;
-    localStorage.removeItem('quizlab_v2');
+    localStorage.removeItem(STORE_KEY);
     renderDashboard();
   }
 
   function exportCSV() {
     const users = getStore().users || [];
-    const rows  = [['Name', 'Email', 'MCQ Score', 'MCQ %', 'This or That Done', 'Joined']];
+    const rows  = [['Name', 'Email', 'EA Score', 'EA Tier', 'Test 2', 'Joined']];
     users.forEach(u => {
-      const t1 = u.test1;
+      const t1       = u.test1;
+      const yesCount = t1 ? t1.answers.filter(a => a.chosen === 'yes').length : null;
+      const tier     = yesCount !== null ? eaTier(yesCount) : null;
       rows.push([
         u.name,
         u.email,
-        t1 ? `${t1.score}/${t1.total}` : '',
-        t1 ? Math.round((t1.score / t1.total) * 100) + '%' : '',
-        u.test2 ? 'Yes' : 'No',
+        yesCount !== null ? `${yesCount}/${t1.answers.length}` : '',
+        tier ? tier.text : '',
+        !u.test2 ? 'Pending' : u.test2.skipped ? 'Skipped' : 'Done',
         fmtDate(u.joinedAt)
       ]);
     });
-    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const a   = document.createElement('a');
     a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
     a.download = 'quizlab-results.csv';
