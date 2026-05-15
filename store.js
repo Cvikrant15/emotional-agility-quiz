@@ -64,3 +64,20 @@ function shuffle(arr) {
   }
   return a;
 }
+
+// Paste your Apps Script Web App URL here after deploying (see apps-script.js for setup)
+const SHEETS_URL = '';
+
+async function submitToSheets(user) {
+  if (!SHEETS_URL) return;
+  try {
+    await fetch(SHEETS_URL, {
+      method: 'POST',
+      // text/plain avoids a CORS preflight while Apps Script still receives the body
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(user),
+    });
+  } catch (e) {
+    console.warn('Sheets sync failed — data is safe in localStorage:', e);
+  }
+}

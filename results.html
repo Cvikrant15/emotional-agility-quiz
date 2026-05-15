@@ -115,6 +115,7 @@
     .tot-option.chosen-b { font-weight: 700; background: rgba(0,206,201,0.08); color: var(--accent2); border-color: var(--accent2); }
     .tot-option.unchosen { color: var(--muted); font-weight: 400; }
     .tot-option.side-a   { text-align: right; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -210,16 +211,56 @@
   });
 
   // ── Dashboard shell ──
-  function renderDashboard() {
-    const store   = getStore();
-    const users   = store.users || [];
+  async function renderDashboard() {
+    const dash = document.getElementById('dashboard');
+
+    if (!SHEETS_URL) {
+      dash.innerHTML = `
+        <div class="card fu tc" style="max-width:480px;margin:40px auto;">
+          <div style="font-size:2.2rem;margin-bottom:14px;">⚙️</div>
+          <h3>Google Sheets not configured</h3>
+          <p class="sub" style="margin-top:10px;font-size:0.88rem;line-height:1.6;">
+            Paste your Apps Script Web App URL into <code style="background:var(--surface);padding:1px 6px;border-radius:5px;font-size:0.85em;">SHEETS_URL</code>
+            in <code style="background:var(--surface);padding:1px 6px;border-radius:5px;font-size:0.85em;">store.js</code>.<br><br>
+            See <strong>apps-script.js</strong> in the repo for setup instructions.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    dash.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:80px 0;color:var(--muted);">
+        <div style="width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+        <span style="font-size:0.88rem;font-weight:600;">Loading results…</span>
+      </div>
+    `;
+
+    let users = [];
+    try {
+      const res = await fetch(SHEETS_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      users = data.users || [];
+    } catch (err) {
+      dash.innerHTML = `
+        <div class="card fu tc" style="max-width:480px;margin:40px auto;">
+          <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+          <h3>Couldn't load results</h3>
+          <p class="sub" style="margin-top:8px;font-size:0.88rem;">${err.message}</p>
+          <button class="btn btn-ghost" style="margin-top:18px;" onclick="renderDashboard()">Try again</button>
+        </div>
+      `;
+      return;
+    }
+
     const t1Users = users.filter(u => u.test1);
     const t2Users = users.filter(u => u.test2);
     const avgEA   = t1Users.length > 0
       ? (t1Users.reduce((s, u) => s + u.test1.answers.filter(a => a.chosen === 'yes').length, 0) / t1Users.length).toFixed(1)
       : null;
 
-    document.getElementById('dashboard').innerHTML = `
+    dash.innerHTML = `
       <div class="fu w100" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 0 8px;">
         <div>
           <h1 style="font-size:1.6rem;">Results Dashboard</h1>

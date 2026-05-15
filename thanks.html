@@ -34,6 +34,9 @@
   const app       = document.getElementById('app');
   const firstName = user ? user.name.split(' ')[0] : 'there';
 
+  // Submit complete record to Google Sheets (fire-and-forget; localStorage is the fallback)
+  if (user && user.test1) submitToSheets(user);
+
   app.innerHTML = `
     <div class="tc fu" style="padding:16px 0 4px;">
       <div class="confetti-wrap pop">🎉🎊✨</div>
