@@ -17,7 +17,7 @@ function loginUser(name, email) {
   const store = getStore();
   let user = store.users.find(u => u.email === email);
   if (!user) {
-    user = { name, email, test1: null, test2: null, joinedAt: new Date().toISOString() };
+    user = { name, email, test1: null, test2: null, test3: null, joinedAt: new Date().toISOString() };
     store.users.push(user);
   } else {
     user.name = name;
@@ -44,6 +44,17 @@ function saveTest2(answers, skipped = false) {
   const user = store.users.find(u => u.email === email);
   if (user) {
     user.test2 = { answers, skipped, completedAt: new Date().toISOString() };
+    saveStore(store);
+  }
+}
+
+function saveTest3(answers) {
+  const email = sessionStorage.getItem('ql_email');
+  if (!email) return;
+  const store = getStore();
+  const user = store.users.find(u => u.email === email);
+  if (user) {
+    user.test3 = { answers, completedAt: new Date().toISOString() };
     saveStore(store);
   }
 }

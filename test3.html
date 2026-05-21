@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuizLab — Test 1</title>
+  <title>QuizLab — Test 3</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,9 +15,9 @@
   </div>
   <div class="steps">
     <div class="step done"></div>
+    <div class="step done"></div>
+    <div class="step done"></div>
     <div class="step active"></div>
-    <div class="step"></div>
-    <div class="step"></div>
     <div class="step"></div>
   </div>
 </div>
@@ -31,18 +31,12 @@
   if (!requireLogin()) throw new Error('redirect');
 
   const user = getCurrentUser();
+  if (user && !user.test1) { window.location.replace('test1.html'); throw new Error('redirect'); }
+  if (user && !user.test2) { window.location.replace('test2.html'); throw new Error('redirect'); }
+  if (user && user.test3)  { window.location.replace('thanks.html'); throw new Error('redirect'); }
 
-  // Already finished test 1 — skip forward
-  if (user && user.test1) {
-    window.location.replace(user.test2 ? 'thanks.html' : 'test2.html');
-    throw new Error('redirect');
-  }
-
-  // Lock browser back button
   history.pushState(null, '', location.href);
-  window.addEventListener('popstate', function () {
-    history.pushState(null, '', location.href);
-  });
+  window.addEventListener('popstate', () => history.pushState(null, '', location.href));
 
   let testComplete = false;
 
@@ -54,8 +48,15 @@
   }
 
   const app = document.getElementById('app');
-  // No shuffle — these statements are shown in fixed order
-  const questions = [...MCQ_QUESTIONS];
+
+  // Build 3 questions from the user's top 3 Test 2 picks
+  const top3     = getTop3(user.test2.answers);
+  const questions = top3.map((x, i) => ({
+    id:       i + 1,
+    item:     ITEMS[x.letter] || x.letter.toUpperCase(),
+    question: TEST3_TEMPLATE.replace('{item}', ITEMS[x.letter] || x.letter.toUpperCase()),
+  }));
+
   let idx = 0;
   const answers = [];
 
@@ -68,7 +69,7 @@
     app.innerHTML = `
       <div class="progress-wrap fu w100">
         <div class="progress-meta">
-          <span>Statement ${idx + 1} <span class="muted">of ${questions.length}</span></span>
+          <span>Question ${idx + 1} <span class="muted">of ${questions.length}</span></span>
           <span class="muted">${pct}%</span>
         </div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
@@ -76,7 +77,7 @@
 
       <div class="card fu1">
         <p style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:20px;">
-          Test 1 &nbsp;·&nbsp; About Me
+          Test 3 &nbsp;·&nbsp; Follow-up
         </p>
 
         <h2 style="line-height:1.55;margin-bottom:32px;font-size:1.2rem;font-weight:600;">
@@ -97,7 +98,7 @@
 
   function pick(choice) {
     const q = questions[idx];
-    answers.push({ questionId: q.id, question: q.question, chosen: choice });
+    answers.push({ questionId: q.id, item: q.item, question: q.question, chosen: choice });
 
     const btnYes = document.querySelector('.yn-yes');
     const btnNo  = document.querySelector('.yn-no');
@@ -113,18 +114,18 @@
 
   function showSummary() {
     testComplete = true;
-    saveTest1(answers);
+    saveTest3(answers);
 
     app.innerHTML = `
       <div class="tc fu" style="padding:24px 0 4px;">
         <div style="font-size:3rem;margin-bottom:14px;">✅</div>
-        <h1>Section 1 complete!</h1>
+        <h1>Section 3 complete!</h1>
         <p class="sub" style="margin-top:10px;max-width:320px;margin-inline:auto;">
-          Great work — let's move on to the next part.
+          Almost there — just one more step.
         </p>
       </div>
       <div class="fu1 w100">
-        <a href="test2.html" class="btn btn-primary btn-full">Continue &nbsp;→</a>
+        <a href="thanks.html" class="btn btn-primary btn-full">Continue &nbsp;→</a>
       </div>
     `;
   }

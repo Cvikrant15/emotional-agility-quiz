@@ -170,6 +170,9 @@
 
   // tallyTest2, getTop3, getTiedAtCutoff, roundRobinPairs — defined in store.js
 
+  function itemName(letter) { return ITEMS[letter] || letter.toUpperCase(); }
+  function top3Names(answers) { return getTop3(answers).map(x => itemName(x.letter)); }
+
   const EA_TIERS = [
     { min: 10, text: 'High EA',       color: '#00b894' },
     { min: 8,  text: 'Strong EA',     color: '#6c5ce7' },
@@ -278,12 +281,14 @@
         <div class="tabs fu2 w100" id="tabBar">
           <button class="tab-btn active" data-tab="participants">Participants</button>
           <button class="tab-btn" data-tab="test1">Test 1 — About Me</button>
-          <button class="tab-btn" data-tab="test2">Test 2 — This or That</button>
+          <button class="tab-btn" data-tab="test2">Test 2 — Pick One</button>
+          <button class="tab-btn" data-tab="test3">Test 3 — Follow-up</button>
         </div>
 
         <div class="tab-panel w100" id="tab-participants">${renderParticipantsTab(users)}</div>
         <div class="tab-panel w100 hidden" id="tab-test1">${renderTest1Tab(users)}</div>
         <div class="tab-panel w100 hidden" id="tab-test2">${renderTest2Tab(users)}</div>
+        <div class="tab-panel w100 hidden" id="tab-test3">${renderTest3Tab(users)}</div>
 
         <div class="fu3 w100">
           <button class="btn btn-ghost btn-full" style="color:var(--danger);border-color:var(--danger);" onclick="clearAll()">
@@ -308,10 +313,12 @@
     const rows = users.map((u, idx) => {
       const t1       = u.test1;
       const t2       = u.test2;
+      const t3       = u.test3;
       const col      = avatarColor(u.email);
       const yesCount = t1 ? calcScore(t1.answers) : null;
       const tier     = yesCount !== null ? eaTier(yesCount) : null;
       const t2Label  = !t2 ? ['chip-skip', 'Pending'] : t2.skipped ? ['chip-skip', 'Skipped'] : null;
+      const t3Label  = !t3 ? ['chip-skip', 'Pending'] : null;
       return `
         <tr class="p-row" id="prow-${idx}" onclick="toggleDetail(${idx})">
           <td>
@@ -333,7 +340,13 @@
           <td>
             ${t2Label
               ? `<span class="chip ${t2Label[0]}">${t2Label[1]}</span>`
-              : `<span style="font-weight:700;font-size:0.88rem;">${getTop3(t2.answers).map(x => x.letter.toUpperCase()).join(', ')}</span>`
+              : `<span style="font-weight:700;font-size:0.88rem;">${top3Names(t2.answers).join(', ')}</span>`
+            }
+          </td>
+          <td>
+            ${t3Label
+              ? `<span class="chip ${t3Label[0]}">${t3Label[1]}</span>`
+              : `<span style="font-size:0.85rem;">${t3.answers.map(a => a.chosen === 'yes' ? '✓' : '✗').join(' ')}</span>`
             }
           </td>
           <td style="color:var(--muted);font-size:0.85rem;">${fmtDate(u.joinedAt)}</td>
@@ -346,7 +359,7 @@
           </td>
         </tr>
         <tr class="p-detail hidden" id="detail-${idx}">
-          <td colspan="6">
+          <td colspan="7">
             <div class="p-detail-inner">${renderUserDetail(u)}</div>
           </td>
         </tr>
@@ -364,7 +377,8 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Test 1 — EA</th>
-                <th>Test 2</th>
+                <th>Test 2 — Top picks</th>
+                <th>Test 3</th>
                 <th>Joined</th>
                 <th></th>
               </tr>
@@ -386,7 +400,7 @@
   }
 
   function renderUserDetail(user) {
-    if (!user.test1 && !user.test2) {
+    if (!user.test1 && !user.test2 && !user.test3) {
       return '<p class="sub" style="text-align:center;padding:8px 0;">No responses recorded yet.</p>';
     }
 
@@ -426,14 +440,32 @@
           </div>
         `;
       } else {
-        const top3 = getTop3(user.test2.answers).map(x => x.letter.toUpperCase()).join(', ');
         html += `
           <div>
             <div class="detail-section-label">Test 2 — Top picks</div>
-            <p style="font-size:1.1rem;font-weight:700;letter-spacing:0.04em;">${top3}</p>
+            <p style="font-size:1.1rem;font-weight:700;">${top3Names(user.test2.answers).join(', ')}</p>
           </div>
         `;
       }
+    }
+
+    if (user.test3) {
+      html += `
+        <div>
+          <div class="detail-section-label">Test 3 — Follow-up</div>
+          <div class="ans-grid">
+            ${user.test3.answers.map(a => {
+              const yes = a.chosen === 'yes';
+              return `
+                <div class="ans-card">
+                  <span class="ans-text">${a.question}</span>
+                  <span class="ans-badge ${yes ? 'ans-yes' : 'ans-no'}">${yes ? 'Yes' : 'No'}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
     }
 
     return html;
@@ -576,6 +608,52 @@
     `;
   }
 
+  // ── Tab: Test 3 ──
+  function renderTest3Tab(users) {
+    const t3Users = users.filter(u => u.test3 && u.test3.answers.length > 0);
+    if (t3Users.length === 0) {
+      return `<div class="card tc" style="width:100%;"><p class="sub" style="padding:20px 0;">No Test 3 responses yet.</p></div>`;
+    }
+
+    // Per-item yes/no breakdown across all users who answered that item
+    const itemMap = {};
+    t3Users.forEach(u => {
+      u.test3.answers.forEach(a => {
+        if (!itemMap[a.item]) itemMap[a.item] = { yes: 0, no: 0 };
+        itemMap[a.item][a.chosen]++;
+      });
+    });
+
+    const itemRows = Object.entries(itemMap).map(([item, counts]) => {
+      const tot = counts.yes + counts.no;
+      const yp  = tot > 0 ? Math.round((counts.yes / tot) * 100) : 0;
+      const np  = 100 - yp;
+      return `
+        <div class="q-row">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <span class="q-label" style="font-weight:700;">${item}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;font-weight:700;">
+            <span style="color:var(--success);">Yes — ${yp}% <span style="font-weight:400;color:var(--muted);">(${counts.yes})</span></span>
+            <span style="color:var(--danger);">No — ${np}% <span style="font-weight:400;color:var(--muted);">(${counts.no})</span></span>
+          </div>
+          <div class="split-bar">
+            <div style="width:${yp}%;background:var(--success);transition:width .6s ease;"></div>
+            <div style="flex:1;background:var(--danger);opacity:0.3;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="card" style="width:100%;">
+        <h3 style="margin-bottom:4px;">Test 3 — Follow-up Responses</h3>
+        <p class="sub" style="font-size:0.85rem;margin-bottom:22px;">${t3Users.length} participant${t3Users.length !== 1 ? 's' : ''} completed this section</p>
+        <div style="display:flex;flex-direction:column;gap:20px;">${itemRows}</div>
+      </div>
+    `;
+  }
+
   // ── Actions ──
   function logout() {
     currentAdmin = null;
@@ -603,20 +681,24 @@
 
   function exportCSV() {
     const users = getStore().users || [];
-    const rows  = [['Name', 'Email', 'EA Score', 'EA Tier', 'Test 2 Top Picks', 'Joined']];
+    const rows  = [['Name', 'Email', 'EA Score', 'EA Tier', 'Test 2 Top Picks', 'Test 3 Answers', 'Joined']];
     users.forEach(u => {
       const t1       = u.test1;
       const yesCount = t1 ? calcScore(t1.answers) : null;
       const tier     = yesCount !== null ? eaTier(yesCount) : null;
       const top3     = (u.test2 && !u.test2.skipped && u.test2.answers.length)
-                         ? getTop3(u.test2.answers).map(x => x.letter.toUpperCase()).join(', ')
+                         ? top3Names(u.test2.answers).join(', ')
                          : (!u.test2 ? 'Pending' : 'Skipped');
+      const t3       = u.test3
+                         ? u.test3.answers.map(a => `${a.item}: ${a.chosen}`).join(' | ')
+                         : 'Pending';
       rows.push([
         u.name,
         u.email,
         yesCount !== null ? `${yesCount}/${t1.answers.length}` : '',
         tier ? tier.text : '',
         top3,
+        t3,
         fmtDate(u.joinedAt)
       ]);
     });

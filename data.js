@@ -11,6 +11,20 @@ const MCQ_QUESTIONS = [
   { id: 10, question: "I can pay attention to what I am doing right now.",                           correct: 'yes' },
 ];
 
+// Display names for each Test 2 option — swap these for real labels when ready
+const ITEMS = {
+  a: 'Rome',
+  b: 'Barcelona',
+  c: 'London',
+  d: 'Paris',
+  e: 'Tokyo',
+  f: 'Sydney',
+  g: 'New York',
+};
+
+// Test 3 question template — {item} is replaced with each top-3 pick's name
+const TEST3_TEMPLATE = 'Would you like to go to {item}?';
+
 const THIS_OR_THAT = [
   { id: 1,  a: 'd', b: 'g' },
   { id: 2,  a: 'a', b: 'c' },
