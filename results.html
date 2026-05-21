@@ -564,9 +564,13 @@
       return `<div class="card tc" style="width:100%;"><p class="sub" style="padding:20px 0;">No Test 2 responses yet.${skipped > 0 ? ` (${skipped} skipped)` : ''}</p></div>`;
     }
 
-    // Count how many users had each letter in their top 3
+    // Tally total head-to-head wins per letter across all participants
+    const totalWins  = {};
     const top3Counts = {};
     t2Users.forEach(u => {
+      tallyTest2(u.test2.answers).forEach(x => {
+        totalWins[x.letter] = (totalWins[x.letter] || 0) + x.wins;
+      });
       getTop3(u.test2.answers).forEach(x => {
         top3Counts[x.letter] = (top3Counts[x.letter] || 0) + 1;
       });
@@ -574,21 +578,22 @@
 
     const letters = [...new Set(THIS_OR_THAT.flatMap(q => [q.a, q.b]))].sort();
     const ranked  = letters
-      .map(l => ({ letter: l, count: top3Counts[l] || 0 }))
-      .sort((x, y) => y.count - x.count || x.letter.localeCompare(y.letter));
+      .map(l => ({ letter: l, wins: totalWins[l] || 0, top3: top3Counts[l] || 0 }))
+      .sort((x, y) => y.wins - x.wins || x.letter.localeCompare(y.letter));
 
-    const maxCount = ranked[0]?.count || 1;
+    const maxWins = ranked[0]?.wins || 1;
 
     const rows = ranked.map(r => {
-      const pct = Math.round((r.count / t2Users.length) * 100);
+      const pct = Math.round((r.top3 / t2Users.length) * 100);
       return `
         <div style="display:flex;align-items:center;gap:14px;">
-          <span style="font-size:1rem;font-weight:800;min-width:20px;text-align:center;color:var(--accent);">${r.letter.toUpperCase()}</span>
+          <span style="font-size:0.92rem;font-weight:800;min-width:80px;color:var(--accent);">${itemName(r.letter)}</span>
           <div style="flex:1;height:10px;background:var(--border);border-radius:99px;overflow:hidden;">
-            <div style="width:${Math.round((r.count/maxCount)*100)}%;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;"></div>
+            <div style="width:${Math.round((r.wins/maxWins)*100)}%;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;"></div>
           </div>
-          <span style="font-size:0.84rem;font-weight:700;min-width:80px;text-align:right;">
-            ${r.count} <span style="font-weight:400;color:var(--muted);">/ ${t2Users.length} &nbsp;(${pct}%)</span>
+          <span style="font-size:0.84rem;font-weight:700;white-space:nowrap;">
+            ${r.wins} wins
+            <span style="font-weight:400;color:var(--muted);">&nbsp;·&nbsp; top 3 of ${r.top3}/${t2Users.length} (${pct}%)</span>
           </span>
         </div>
       `;
