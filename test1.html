@@ -34,7 +34,9 @@
 
   // Already finished test 1 — skip forward
   if (user && user.test1) {
-    window.location.replace(user.test2 ? 'thanks.html' : 'test2.html');
+    if      (!user.test2) window.location.replace('test2.html');
+    else if (!user.test3) window.location.replace('test3.html');
+    else                  window.location.replace('thanks.html');
     throw new Error('redirect');
   }
 
