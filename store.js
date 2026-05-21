@@ -79,12 +79,9 @@ function tallyTest2(answers) {
     .sort((x, y) => y.wins - x.wins || x.letter.localeCompare(y.letter));
 }
 
-// Returns top picks, expanding to include all letters tied at the 3rd-place threshold
+// Returns exactly the top 3 picks (or fewer if <3 letters were chosen)
 function getTop3(answers) {
-  const tally = tallyTest2(answers);
-  if (tally.length <= 3) return tally;
-  const threshold = tally[2].wins;
-  return tally.filter(x => x.wins >= threshold);
+  return tallyTest2(answers).slice(0, 3);
 }
 
 // Returns letters that are tied at the 3rd-place cutoff (and cause >3 top picks),

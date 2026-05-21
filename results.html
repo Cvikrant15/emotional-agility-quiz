@@ -333,7 +333,7 @@
           <td>
             ${t2Label
               ? `<span class="chip ${t2Label[0]}">${t2Label[1]}</span>`
-              : getTop3(t2.answers).map((x, i) => `<span style="display:inline-block;padding:2px 9px;border-radius:99px;font-size:0.74rem;font-weight:800;margin-right:3px;background:${['rgba(108,92,231,0.12)','rgba(0,206,201,0.12)','rgba(0,184,148,0.12)'][i]};color:${['var(--accent)','var(--accent2)','var(--success)'][i]};">${x.letter.toUpperCase()}</span>`).join('')
+              : `<span style="font-weight:700;font-size:0.88rem;">${getTop3(t2.answers).map(x => x.letter.toUpperCase()).join(', ')}</span>`
             }
           </td>
           <td style="color:var(--muted);font-size:0.85rem;">${fmtDate(u.joinedAt)}</td>
@@ -426,36 +426,11 @@
           </div>
         `;
       } else {
-        const tally  = tallyTest2(user.test2.answers);
-        const top3   = getTop3(user.test2.answers);
-        const medals = ['🥇', '🥈', '🥉'];
-        // Assign medal by rank — tied entries share the same medal
-        let rank = 0, lastWins = -1;
-        const podium = top3.map(x => {
-          if (x.wins !== lastWins) { rank++; lastWins = x.wins; }
-          const medal = medals[rank - 1] || `#${rank}`;
-          return `
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:56px;">
-              <div style="font-size:1.4rem;">${medal}</div>
-              <div style="font-size:1.6rem;font-weight:800;color:var(--accent);">${x.letter.toUpperCase()}</div>
-              <div style="font-size:0.75rem;font-weight:600;color:var(--muted);">${x.wins} win${x.wins !== 1 ? 's' : ''}</div>
-            </div>
-          `;
-        }).join('');
-        const allBars = tally.map(x => `
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:0.88rem;font-weight:700;min-width:16px;text-align:center;">${x.letter.toUpperCase()}</span>
-            <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
-              <div style="width:${Math.round((x.wins/6)*100)}%;height:100%;background:var(--accent);border-radius:99px;"></div>
-            </div>
-            <span style="font-size:0.78rem;font-weight:600;color:var(--muted);min-width:32px;">${x.wins}/6</span>
-          </div>
-        `).join('');
+        const top3 = getTop3(user.test2.answers).map(x => x.letter.toUpperCase()).join(', ');
         html += `
           <div>
-            <div class="detail-section-label">Test 2 — Pick One &nbsp;·&nbsp; Top 3</div>
-            <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;">${podium}</div>
-            <div style="display:flex;flex-direction:column;gap:8px;">${allBars}</div>
+            <div class="detail-section-label">Test 2 — Top picks</div>
+            <p style="font-size:1.1rem;font-weight:700;letter-spacing:0.04em;">${top3}</p>
           </div>
         `;
       }
@@ -559,35 +534,29 @@
 
     // Count how many users had each letter in their top 3
     const top3Counts = {};
-    const totalWins  = {};
     t2Users.forEach(u => {
-      const top3 = getTop3(u.test2.answers);
-      top3.forEach(x => { top3Counts[x.letter] = (top3Counts[x.letter] || 0) + 1; });
-      tallyTest2(u.test2.answers).forEach(x => {
-        totalWins[x.letter] = (totalWins[x.letter] || 0) + x.wins;
+      getTop3(u.test2.answers).forEach(x => {
+        top3Counts[x.letter] = (top3Counts[x.letter] || 0) + 1;
       });
     });
 
-    // All letters that appear, sorted by top-3 appearances desc
     const letters = [...new Set(THIS_OR_THAT.flatMap(q => [q.a, q.b]))].sort();
     const ranked  = letters
-      .map(l => ({ letter: l, top3: top3Counts[l] || 0, wins: totalWins[l] || 0 }))
-      .sort((x, y) => y.top3 - x.top3 || y.wins - x.wins);
+      .map(l => ({ letter: l, count: top3Counts[l] || 0 }))
+      .sort((x, y) => y.count - x.count || x.letter.localeCompare(y.letter));
 
-    const maxTop3 = ranked[0]?.top3 || 1;
-    const medals  = ['🥇', '🥈', '🥉'];
+    const maxCount = ranked[0]?.count || 1;
 
-    const rows = ranked.map((r, i) => {
-      const pct = Math.round((r.top3 / t2Users.length) * 100);
+    const rows = ranked.map(r => {
+      const pct = Math.round((r.count / t2Users.length) * 100);
       return `
         <div style="display:flex;align-items:center;gap:14px;">
-          <span style="font-size:1.1rem;min-width:24px;text-align:center;">${medals[i] || ''}</span>
-          <span style="font-size:1.1rem;font-weight:800;min-width:24px;text-align:center;color:var(--accent);">${r.letter.toUpperCase()}</span>
+          <span style="font-size:1rem;font-weight:800;min-width:20px;text-align:center;color:var(--accent);">${r.letter.toUpperCase()}</span>
           <div style="flex:1;height:10px;background:var(--border);border-radius:99px;overflow:hidden;">
-            <div style="width:${maxTop3 > 0 ? Math.round((r.top3/maxTop3)*100) : 0}%;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;"></div>
+            <div style="width:${Math.round((r.count/maxCount)*100)}%;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;"></div>
           </div>
           <span style="font-size:0.84rem;font-weight:700;min-width:80px;text-align:right;">
-            ${r.top3} <span style="font-weight:400;color:var(--muted);">/ ${t2Users.length} &nbsp;(${pct}%)</span>
+            ${r.count} <span style="font-weight:400;color:var(--muted);">/ ${t2Users.length} &nbsp;(${pct}%)</span>
           </span>
         </div>
       `;
@@ -599,7 +568,7 @@
 
     return `
       <div class="card" style="width:100%;">
-        <h3 style="margin-bottom:4px;">Top 3 — Group Leaderboard</h3>
+        <h3 style="margin-bottom:4px;">Top Picks — Group Overview</h3>
         <p class="sub" style="font-size:0.85rem;margin-bottom:2px;">How often each option appeared in participants' top 3</p>
         ${skippedNote}
         <div style="display:flex;flex-direction:column;gap:14px;margin-top:22px;">${rows}</div>
