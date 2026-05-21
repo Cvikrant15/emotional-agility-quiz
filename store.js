@@ -65,6 +65,48 @@ function shuffle(arr) {
   return a;
 }
 
+// ── Test 2 scoring ──
+
+// Returns all letters sorted by win count desc, e.g. [{letter:'d', wins:5}, ...]
+function tallyTest2(answers) {
+  const counts = {};
+  answers.forEach(a => {
+    const letter = a.chosen === 'a' ? a.a : a.b;
+    counts[letter] = (counts[letter] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .map(([letter, wins]) => ({ letter, wins }))
+    .sort((x, y) => y.wins - x.wins || x.letter.localeCompare(y.letter));
+}
+
+// Returns top picks, expanding to include all letters tied at the 3rd-place threshold
+function getTop3(answers) {
+  const tally = tallyTest2(answers);
+  if (tally.length <= 3) return tally;
+  const threshold = tally[2].wins;
+  return tally.filter(x => x.wins >= threshold);
+}
+
+// Returns letters that are tied at the 3rd-place cutoff (and cause >3 top picks),
+// or null if there is no tie to resolve.
+function getTiedAtCutoff(answers) {
+  const tally = tallyTest2(answers);
+  if (tally.length <= 3) return null;
+  const threshold = tally[2].wins;
+  const tied = tally.filter(x => x.wins === threshold);
+  return tied.length > 1 ? tied.map(x => x.letter) : null;
+}
+
+// Generates all C(n,2) round-robin pairs for a set of letters
+function roundRobinPairs(letters, idPrefix) {
+  const pairs = [];
+  let n = 1;
+  for (let i = 0; i < letters.length; i++)
+    for (let j = i + 1; j < letters.length; j++)
+      pairs.push({ id: `${idPrefix}_${n++}`, a: letters[i], b: letters[j] });
+  return pairs;
+}
+
 // Paste your Apps Script Web App URL here after deploying (see apps-script.js for setup)
 const SHEETS_URL = '';
 
