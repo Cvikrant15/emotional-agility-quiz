@@ -171,7 +171,7 @@
   // tallyTest2, getTop3, getTiedAtCutoff, roundRobinPairs — defined in store.js
 
   function itemName(letter) { return ITEMS[letter] || letter.toUpperCase(); }
-  function top3Names(answers) { return getTop3(answers).map(x => itemName(x.letter)); }
+  function top3Names(answers) { return getTop3(answers).map(x => `${itemName(x.letter)} (${x.wins})`); }
 
   const EA_TIERS = [
     { min: 10, text: 'High EA',       color: '#00b894' },
